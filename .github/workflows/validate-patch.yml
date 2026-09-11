@@ -1,0 +1,71 @@
+name: validate-patch
+
+on:
+  workflow_dispatch:
+    inputs:
+      change_id:
+        description: Identifier for the change under validation
+        required: true
+      policy_file:
+        description: Policy file path
+        default: policies/default.policy.json
+      promotion_mode:
+        description: manual waits for a reviewer; auto promotes on PASS when guardrails are met
+        type: choice
+        options: [manual, auto]
+        default: manual
+
+jobs:
+  validate:
+    runs-on: [self-hosted, windows]
+    outputs:
+      verdict: ${{ steps.evaluate.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preflight
+        shell: powershell
+        run: Write-Host "TODO: resolve test, validate policy, check appliance reachability"
+      - name: Run Login Enterprise validation
+        shell: powershell
+        run: Write-Host "TODO: start test and poll to completion"
+      - name: Evaluate policy
+        id: evaluate
+        shell: powershell
+        run: |
+          Write-Host "TODO: deterministic evaluation"
+          "verdict=INCONCLUSIVE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidence-${{ inputs.change_id }}
+          path: evidence/
+          if-no-files-found: ignore
+
+  promote-manual:
+    needs: validate
+    if: needs.validate.outputs.verdict == 'PASS' && inputs.promotion_mode == 'manual'
+    runs-on: [self-hosted, windows]
+    environment: promotion-approval
+    steps:
+      - name: Handoff to deployment system
+        shell: powershell
+        run: Write-Host "TODO: write promotion record or call the existing deployment system"
+
+  promote-auto:
+    needs: validate
+    if: needs.validate.outputs.verdict == 'PASS' && inputs.promotion_mode == 'auto'
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Check guardrails and hand off
+        shell: powershell
+        run: Write-Host "TODO: verify policy guardrails, write promotion record, emit event"
+
+  continuous-testing:
+    needs: [promote-manual, promote-auto]
+    if: always() && (needs.promote-manual.result == 'success' || needs.promote-auto.result == 'success')
+    runs-on: [self-hosted, windows]
+    steps:
+      - name: Hand workflow to Login Enterprise continuous testing
+        shell: powershell
+        run: Write-Host "TODO: schedule the same application workflow as a continuous test"

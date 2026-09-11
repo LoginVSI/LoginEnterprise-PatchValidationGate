@@ -1,0 +1,30 @@
+{
+  "policyVersion": "0.1",
+  "name": "default-functional",
+  "test": { "name": "REPLACE_WITH_LE_APPLICATION_TEST_NAME" },
+  "execution": {
+    "maxWaitMinutes": 45,
+    "pollIntervalSeconds": 30
+  },
+  "functional": {
+    "requiredApplications": [],
+    "allowStepRetries": 1,
+    "failOnAnyApplicationFailure": true
+  },
+  "performance": {
+    "enabled": false,
+    "note": "Thresholds need a baseline with more than one run behind it. Deferred."
+  },
+  "promotion": {
+    "defaultMode": "manual",
+    "autoRequires": ["verdict:PASS", "results-complete"]
+  },
+  "inconclusiveWhen": [
+    "test-not-found",
+    "preflight-failed",
+    "run-timeout",
+    "launcher-or-connection-error",
+    "results-incomplete",
+    "policy-invalid"
+  ]
+}
