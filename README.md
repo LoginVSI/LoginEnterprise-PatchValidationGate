@@ -32,9 +32,9 @@ PASS does not mean a patch is safe. PASS means the validation policy you defined
 
 ## Status as of 2026-09-11
 
-What exists: this skeleton, the policy and verdict model, a GitHub Actions workflow with the gate condition in place, and the Login Enterprise API mapping being filled in from the appliance OpenAPI spec.
+What exists: the policy and verdict model, a GitHub Actions workflow with the gate condition in place, the Login Enterprise API mapping from the appliance OpenAPI spec, and a thin PowerShell module with five functions: connect, read the appliance version, resolve an application test by exact name, start a run tagged with the change id (or pick up the one that already exists), and wait for it to complete with the raw run written to disk. Sixty-eight unit tests run against mocked HTTP on both Windows PowerShell 5.1 and PowerShell 7, and a hosted CI workflow runs lint and those tests on every push with no appliance in sight. The docs cover setup, contributing, security, working here as an AI agent, and the three contracts other systems plug into. The version call has been verified against a Login Enterprise 6.8.6 appliance.
 
-What Part 2 adds: a thin PowerShell wrapper over the Login Enterprise Public API, a reference change adapter, start and poll of an application test, results retrieval, the evaluator, the evidence bundle, and one PASS run and one FAIL run you can look at.
+What Part 2 adds: the first real run against an application test, a reference change adapter, results retrieval, the evaluator, the evidence bundle, and one PASS run and one FAIL run you can look at.
 
 ## Requirements
 
