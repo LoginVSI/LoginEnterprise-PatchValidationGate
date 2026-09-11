@@ -1,0 +1,43 @@
+name: ci
+
+# Lint and unit tests. Needs no appliance and no secrets. Runs in Windows
+# PowerShell 5.1 on purpose: that is the floor the module has to work on.
+# validate-patch.yml is the gate itself and runs on a self-hosted runner later.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  lint-and-unit-tests:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show PowerShell version
+        shell: powershell
+        run: $PSVersionTable.PSVersion.ToString()
+
+      - name: Install Pester and PSScriptAnalyzer
+        shell: powershell
+        run: .\scripts\Initialize-DevEnvironment.ps1
+
+      - name: Lint
+        shell: powershell
+        run: .\scripts\Invoke-Lint.ps1
+
+      - name: Unit tests
+        shell: powershell
+        run: .\tests\Invoke-Tests.ps1 -Output Normal
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pester-results
+          path: tests/results/
+          if-no-files-found: ignore
