@@ -41,3 +41,34 @@ What Part 2 adds: a thin PowerShell wrapper over the Login Enterprise Public API
 - A Login Enterprise appliance with Public API access and at least one application test
 - A Windows machine with PowerShell 5.1 or later, registered as a self-hosted GitHub Actions runner
 - GitHub Actions
+## Repository layout
+
+```
+src/LEGate/            PowerShell module. LEGate.psd1 manifest, LEGate.psm1 loader.
+  Public/              Exported functions, one per file, Verb-LEGate* naming.
+  Private/             Helpers that stay inside the module: HTTP, paging, logging, clock, reason codes.
+tests/
+  unit/                Pester 5 tests with Invoke-RestMethod mocked. Run anywhere.
+  integration/         Tests against a real appliance. Skip themselves without LE_BASE_URL and LE_API_TOKEN.
+  fixtures/            Sanitized appliance responses. See the README there for the rules.
+  Invoke-Tests.ps1     Runs unit by default, integration with -Integration.
+scripts/               Initialize-DevEnvironment, Invoke-Lint, Invoke-Smoke.
+policies/              Policy files and their JSON schema.
+docs/                  Architecture, verdict model, API notes, contracts, setup, contributing, security, AI agent guide.
+adapters/change/       Change adapters. Contract defined in docs/contracts.md, implementations later.
+.github/workflows/     ci.yml (hosted, no appliance) and validate-patch.yml (the gate, self-hosted later).
+evidence/              Created at runtime, one folder per change id. Ignored by git.
+```
+
+## Run the tests
+
+Windows PowerShell 5.1 is the floor and what CI uses. From the repo root:
+
+```powershell
+.\scripts\Initialize-DevEnvironment.ps1   # installs Pester 5 and PSScriptAnalyzer for the current user
+.\scripts\Invoke-Lint.ps1                 # PSScriptAnalyzer with 5.1 compatibility rules
+.\tests\Invoke-Tests.ps1                  # unit tests, no appliance needed
+.\tests\Invoke-Tests.ps1 -Integration     # adds the appliance tests when LE_BASE_URL and LE_API_TOKEN are set
+```
+
+To prove the module against a real appliance, set `LE_BASE_URL` and `LE_API_TOKEN` and run `.\scripts\Invoke-Smoke.ps1`. Add `-TestName` and `-ChangeId` to start and wait for a run. Details in [docs/setup.md](docs/setup.md).
