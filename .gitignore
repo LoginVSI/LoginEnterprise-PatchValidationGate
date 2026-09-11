@@ -4,4 +4,4 @@ evidence/
 .env
 .vscode/
 *.log
-Thumbs.db
+Thumbs.dbtests/results/
