@@ -21,6 +21,6 @@ Reference implementation: Login Enterprise as an evidence gate for patch promoti
 - `policies/` holds policy files and the schema. `docs/` holds the human docs. `adapters/change/` is for later.
 - Tests go in `tests/unit` (mocked HTTP) and `tests/integration` (real appliance, skipped without env vars) as Pester 5. Fixtures in `tests/fixtures/`, sanitized.
 
-## Scope today (2026-09-11)
+## Approved Part 2 scope (2026-09-17)
 
-Auth, one real call (`GET /system/version`), resolve an application test by exact name, start it, poll to `completed`, dump the raw run to `evidence/{changeId}/`. Nothing else. No evaluator, no evidence bundle, no adapters, no runner, no AI.
+The implemented foundation is auth, the version call, exact application-test resolution, start/resume, polling, and raw run output. Approved Part 2 work extends it with fixture-backed results retrieval, a pure evaluator, contract-compliant evidence, scoped lab change adapters, GitHub issue/approval handoff, simulated promotion, and starting a pre-existing continuous test. Read HANDOFF.md for current gaps, prerequisites, and the next checkpoint; Joshua supplies execution prompts separately, and each task prompt determines the work authorized for that turn. Production deployment integrations, Windows cumulative updates, baseline/performance policy, and AI remain deferred. The technical rules above still apply; adapters/change is now within the approved Part 2 scope.

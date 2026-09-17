@@ -1,343 +1,148 @@
 # HANDOFF: Login Enterprise Patch Validation Gate
 
-Last updated: 2026-09-17 (final handoff version)
-Owner: Joshua Kennedy, Login VSI (product/technical marketing, builds the engineering himself with AI coding agents)
-Repo: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate (public)
+Last inspected: 2026-09-17
+Owner: Joshua Kennedy, Login VSI
+Repository: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate (public, MIT)
 
-This document is the complete handoff. A model or person picking this up should be able to guide Joshua from here to a finished Part 2 without the original conversation.
+This is project context, not a set of coding prompts. Joshua will provide future task prompts separately. Follow applicable agent instructions. Use code as evidence of implementation, docs as intended behavior, and genuine appliance captures as evidence of response shapes. Mocked tests do not establish live validation.
 
----
+## Product rationale and boundaries
 
-## 0. If you are the model reading this
+Security fixes arrive faster than deployment rings can absorb them. Security teams want patches out; EUC teams carry the consequences when an application breaks. Time in a ring often stands in for evidence about whether an organization's own applications still work on its changed image. Produce that evidence before users encounter the change, and dwell time becomes a policy decision.
 
-You are the guide. Joshua is the go-between: you tell him what to do, he does it himself or pastes your prompts into Codex (a coding agent working inside the repo), and he brings the results back to you. Codex reads this file too; you read the repo through GitHub if you can browse, otherwise ask Joshua for `git log --oneline` and a file tree.
+The nine-stage loop remains: change detected, change applied to a validation target, Login Enterprise application test, results retrieval, deterministic policy verdict, approval or auto guardrails, deployment-system promotion, continuous testing, wait for the next change. The published figure places the reference implementation around stages 2 through 6 and the existing deployment system at stage 7, with preserved evidence and a person notified on FAIL or INCONCLUSIVE.
 
-Do these before advising anything:
+Login Enterprise validates. Policy evaluates. A person or the existing deployment system approves and promotes. PASS means policy passed for the tested workflows on the tested target. Coverage is the ceiling; it never means a patch is safe. Timeouts, infrastructure failures, and untrustworthy evidence are INCONCLUSIVE and require a person. Only PASS can proceed, with approval or satisfied auto guardrails. There is no AI in the verdict path.
 
-1. Read this whole file.
-2. Read the repo (public: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate). Priority order: `README.md`, `CLAUDE.md`, `docs/architecture.md`, `docs/verdict.md`, `docs/api-notes.md`, `docs/contracts.md`, `policies/default.policy.json`, `.github/workflows/validate-patch.yml`, `src/LEGate/Public/`, `scripts/Invoke-Smoke.ps1`, `CHANGELOG.md`, git log. That tells you where engineering stopped.
-3. Compare the repo against section 4 here. If they differ, the repo wins; tell Joshua what changed.
-4. Ask Joshua only for values in section 7 that are still blank. Do not ask for context that is in this file.
-5. Then walk him through section 8 (manual setup) and section 9 (prompts), in order, one chunk at a time. Each chunk: the goal, exactly what to do, what "good enough" looks like, and when to stop. Do not summarize this document back to him. Do not re-plan.
+This does not replace Intune, ConfigMgr, Autopatch, Citrix/Omnissa image tooling, or ServiceNow. Lab adapters own apply, verify, and revert; they are not a production deployment or rollback service. Production promotion is simulated in Part 2. Use continuous testing or continuous validation, never monitoring. Do not claim percentages of time saved, exposure reduced, or rings compressed, or make claims about specific customers. The defensible value is earlier workflow evidence, reproducible verdicts, and evidence preservation. The appliance already provides run comparison; the gate adds policy and orchestration.
 
-When you hand him a prompt for Codex, prepend the line "Read HANDOFF.md first." and give it verbatim from section 9.
+## Local inspection baseline
 
-How Joshua works: direct, terse, casual. He wants confident recommendations, not menus. He will scope-creep toward the whole vision; hold the line at Part 2 and push everything else to section 15. Credits are limited, so prompts stay one-shot friendly and offline where possible. If he says "next chunk", give the next chunk and nothing else.
+The checkout was on `main`, tracking `origin/main`, at `580b6a71add260e4915cce83fb59c06632285b1d` (`Add project handoff`). No pre-existing tracked or untracked changes were reported. Origin fetch and push point to the repository above. Recent commits cover the handoff, workflow YAML, README status, contracts/setup/security docs, developer scripts, and lint/hosted CI. Remote state was not refreshed or checked online.
 
----
+This inspection read the module, scripts, policies, workflows, tests, and project docs. It made no appliance calls, installed no dependencies, registered no runner, changed no GitHub settings, and ran no fresh tests. Documentation edits remain local for review.
 
-## 1. The project in one page
+### Built
 
-**What it is.** A public reference implementation showing Login Enterprise as an evidence gate inside a patch promotion process, plus a Workspace Weekly blog series (Part 1 written, Part 2 to build and write).
+The module manifest is `0.1.0`; the changelog still marks the release Unreleased. Five exported functions build a session (`Connect-LEGate`), read the version (`Get-LEGateVersion`), resolve an exact application-test name (`Resolve-LEGateTest`), start or reuse a named run (`Start-LEGateRun`), and poll/write `evidence/{changeId}/run.json` on completion or timeout (`Wait-LEGateRun`). Private helpers provide bearer authentication, GET-only retries, paging, token redaction, logging, UTC timestamps, and reason codes.
 
-**Why it exists.** Login Enterprise customer advisory board conversations surfaced one theme: security fixes arrive faster than deployment rings can absorb them. Security teams push for speed. EUC teams get blamed when a patch breaks an application. The usual answer is to let the patch sit in Ring 1 for days and see if anyone complains.
+The smoke script supports a version check or a start-and-wait check. A successful smoke exit is not a policy PASS. Hosted `ci.yml` installs tooling and runs lint and mocked unit tests in Windows PowerShell 5.1. The saved September 11 report records 68 tests with zero failures. Earlier docs report successful tests on 5.1 and 7 and a version call against appliance 6.8.6. These are historical reports, not fresh verification here. Integration tests currently read version and resolve test names; the optional start test mentioned in their header does not exist.
 
-**The thesis.** Time in a deployment ring is a stand-in for evidence. The ring is where an organization finds out whether its own apps, on its own image, still work after the change, with real users as the test harness. Produce that evidence directly, before anyone in Ring 1 touches the patch, and the dwell time becomes a policy decision instead of a default.
+### Scaffolded or missing
 
-**What Login Enterprise does in this.** It runs the application test against the changed target (stage 3) and, after promotion, the same workflow keeps running as a continuous test (stage 8). Nothing else.
+`validate-patch.yml` is dispatch-only with validate, manual promotion, auto promotion, and continuous-testing jobs. Its steps are TODOs and evaluation emits a fixed INCONCLUSIVE. It has no orchestration, credential wiring, issue integration, target serialization, approval-record capture, or cross-job evidence downloads. Upload points at the entire `evidence/` directory. Naming an environment in YAML does not establish that reviewer or branch protections exist.
 
-**What we never claim.** That PASS means a patch is "safe". That the gate deploys, rolls back, or replaces Intune, ConfigMgr, Autopatch, Citrix/Omnissa image tooling, or ServiceNow. That Login Enterprise is a monitoring tool (use "continuous validation" or "continuous testing"). Any percentage of time saved, exposure reduced, or rings compressed. Anything about specific customers.
+Results retrieval, screenshot downloads, the pure evaluator, evidence manifest/summary, change adapters, issue handoff, promotion record, continuous-test start, and `scripts/Invoke-Gate.ps1` are absent. The adapter directory contains only its README. There are no change manifests, example bundles, runbook, or portability notes. The default policy still has a placeholder test name and an empty required-app array; its schema permits that array and does not enforce all planned preconditions.
 
-**What we do claim.** Shorter elapsed time between "patch available" and "workflow evidence exists". Reproducible, machine-readable verdicts. Preserved evidence. Deterministic policy, no AI in the verdict path. The comparison against a base run already exists in the Login Enterprise API; the gate adds policy and a pipeline around it.
+### Real fixture coverage: none
 
-**Sentiment.** Friendly-controversial, value-driven, honest about what is built and what is not. A gate that has only ever said yes is not a gate; Part 2 exists to show a real FAIL.
+`tests/fixtures/` contains only its README. No genuine successful, deliberately failed, infrastructure-error, failure-detail, or screenshot fixtures exist in this checkout. No local `evidence/` captures were found. Unit tests construct synthetic responses inline. Even the reported version call has no committed capture here. Modified mock data can test an edge case but cannot be the real failed run promised for Part 2.
 
----
+## Approved Part 2 deliverables
 
-## 2. The loop and its boundaries
+Part 2, working title **Show Me the FAIL**, demonstrates a pinned third-party application update and an intentional application break on a disposable lab target. Choose 7-Zip or Notepad++ and record genuine before/after versions and installer provenance privately. Do not invent versions or substitute a registry flag for an application failure. Windows cumulative updates remain deferred.
 
-Matches the published diagram `patch-validation-loop-figure-1.png` (nine boxes, dashed box around 2 to 6 labeled "reference implementation", dashed box around 7 labeled "your deployment system", FAIL/INCONCLUSIVE branch to "stop, evidence kept, person notified", evidence bundle icon under 5, return arrow from 9 to 1).
+The planned existing-test names are `patch-gate-app` and `patch-gate-continuous`; their existence is unconfirmed. Both should exercise Notepad plus the chosen demo app, with a visible action in that workload. The pipeline does not create tests. Two application runs of the same test, with distinct change IDs as run names, are the hero screenshot.
 
-1. Change detected (scanner, catalog, or a person)
-2. Change applied to a validation target
-3. Login Enterprise application test runs against it
-4. Results retrieved, optional baseline compare
-5. Deterministic policy evaluates: PASS, FAIL, INCONCLUSIVE
-6. Gate: manual approval, or auto with guardrails
-7. Existing deployment system promotes (simulated in the reference)
-8. Same workflow handed to Login Enterprise continuous testing
-9. Wait for next change
+Remaining work includes:
 
-Boundaries that never move:
-- Login Enterprise validates. The policy evaluates. A person or the existing deployment system promotes.
-- PASS means the policy passed for the tested workflows on the tested target, nothing more. Coverage is the ceiling.
-- Timeouts and infrastructure errors are INCONCLUSIVE, never FAIL, and always go to a person.
-- Only PASS can auto-promote, and only when policy guardrails are met.
-- Generic foundation for any change class; security patch is the first showcase.
+- Retrieval of overview, sessions, executions, events, and failed-execution screenshots, retaining raw evidence before evaluation. Record performance signals without judging them while performance policy is disabled. Baseline policy remains deferred.
+- A pure evaluator, policy validation, and manifest/verdict/summary export following `docs/contracts.md` and `docs/verdict.md`. Tests must cover PASS, FAIL, INCONCLUSIVE, malformed evidence, and retrieval failures using real fixtures plus clearly synthetic edge cases.
+- `app-update`, `break`, and `noop` lab adapters with apply/verify/revert; orchestration, preflight, logging, and failure preservation. Planned gate exit codes are 0 PASS, 1 FAIL, 2 INCONCLUSIVE, distinct from current smoke exit codes.
+- A GitHub Issue per change: open/reuse the matching change record, comment at stages, leave FAIL/INCONCLUSIVE open for investigation, and close after successful continuous-testing handoff.
+- Manual approval via `promotion-approval`, auto promotion only after functional guardrails pass, a contract-compliant simulated promotion record, and starting the pre-existing continuous test.
+- Sanitized PASS and FAIL bundles, change manifests, a reproducible runbook including restore/reset, README quickstart, and short Azure DevOps, GitLab, Jenkins, and ServiceNow translation notes. ServiceNow maps comments to work notes and evidence to attachments; it is not an integration.
+- Live PASS and FAIL workflow demonstrations, screenshots, a reviewed Part 2 article, and socials. Offline tests and live acceptance are separate checks.
 
-Verdict model (`docs/verdict.md`): PASS, FAIL, INCONCLUSIVE. Reason codes: `test-not-found`, `preflight-failed`, `run-timeout`, `launcher-or-connection-error`, `results-incomplete`, `policy-invalid`.
+## Requirements to reconcile during implementation
 
-Run-to-verdict mapping (`docs/api-notes.md`): run `result` internalError or cancelled -> INCONCLUSIVE; incomplete -> INCONCLUSIVE results-incomplete; events launcherOffline or connectionInitializationTimeout -> INCONCLUSIVE; state never reaches completed in maxWaitMinutes -> INCONCLUSIVE run-timeout; result successful -> every required app has appExecutionSuccessful true and appFailureResults.successCount == totalCount and loginSuccessful true -> PASS, else FAIL. Performance signals are recorded, not judged, while `policy.performance.enabled` is false.
+### API shapes and evidence completeness
 
----
+Use `docs/api-notes.md` for allowed appliance endpoints and parameters. Its source is an exported appliance spec, not fixtures in this repo. Several responses are labeled arrays, while its paging paragraph and `Get-LEGateAllPages` assume `{ items, totalCount, offset }`. Confirm each envelope, nested application fields, screenshot metadata/binary response, and pagination behavior from genuine captures and the matching spec. Record corrections in the notes; never guess fields or paths.
 
-## 3. Decisions already made (do not reopen)
+The paging helper stops on an empty page or missing total count and returns accumulated items; its page limit only warns. Retrieval must establish completeness and report unexpected termination, malformed pages, or truncation. Exercise real pagination with a small documented page size where possible, preserving request parameters and page provenance.
 
-- Repo name `LoginEnterprise-PatchValidationGate`, public from day one under the LoginVSI org, MIT.
-- PowerShell 5.1 compatible everywhere. Thin `Invoke-RestMethod` wrapper. No generated client. Do not add the PSLoginEnterprise module.
-- Login Enterprise Public API **v8-preview**, pinned as a config value. v7 was diffed against the same appliance's export and lacks the run overview with base-run comparison, `testRunName` on start, and `eventTypes` filtering. Rationale is in `docs/api-notes.md`. Appliance is Login Enterprise 6.8.6.
-- CI/CD: GitHub Actions. Hosted `windows-latest` for lint and unit tests (`ci.yml`). Self-hosted Windows runner inside the network for the gate itself (`validate-patch.yml`, `workflow_dispatch` only).
-- Pipeline jobs: `validate`, `promote-manual` (GitHub environment `promotion-approval` with a required reviewer), `promote-auto`, `continuous-testing`. Inputs: `change_id`, `policy_file`, `promotion_mode` (manual|auto), and Prompt A adds `change_manifest`, `adapter`, `target_computer`, `continuous_test_name`.
-- The "patch" in the demo is a pinned third-party application update (7-Zip or Notepad++) installed by a change adapter. A `break` adapter damages that app so a FAIL is real. No mocked results, no registry-flip fakes, no real Windows cumulative update (Part 3).
-- Login Enterprise tests pre-exist. The pipeline never creates tests. It runs `patch-gate-app` (application test) and starts `patch-gate-continuous` (continuous test).
-- What differs between runs: the target's state, and the run's `testRunName` (the change id) and `comment` (policy hash plus description). Two runs of the same test, side by side in the LE UI with different names, is the Part 2 hero screenshot.
-- The "ticket" is a GitHub Issue per change id that the pipeline opens, comments on at each stage, and closes. This is the reference promotion-handoff adapter. ServiceNow is a one-page translation note, not an integration.
-- Stage 7 is simulated: write `promotion-record.json` and log the handoff. Optionally run the adapter against a second VM named "prod". Nothing more.
-- AI: no AI in the verdict path. A read-only evidence explainer skill is Part 3 and only if credits remain (section 13).
-- Model budget: Fable 5.1 credits are nearly gone. Remaining work runs on Opus/Sonnet 5 or equivalent at medium effort.
+Require expected demo applications explicitly in policy. Do not derive required coverage from whatever appears in an overview. Missing, malformed, empty, or truncated evidence cannot yield PASS, including zero executions whose equal zero counts might otherwise appear successful. Complete evidence proving an expected app failed or never executed is FAIL; inability to establish coverage is INCONCLUSIVE. Infrastructure errors and timeouts take precedence. Confirm retry semantics before claiming the configured retry allowance is enforced.
 
----
+The six current reason codes describe INCONCLUSIVE cases. The contracts require reason codes on FAIL too, but do not define an application-failure code. Resolve this gap explicitly across contracts/verdict docs, policy, code, and tests. Do not silently overload an infrastructure code.
 
-## 4. What exists in the repo (as of 2026-09-11 evening, verify against git log)
+### Run identity and shared-target state
 
-- `src/LEGate/`: manifest, loader, five public functions: `Connect-LEGate` (session from `LE_BASE_URL`, `LE_API_TOKEN`, `-ApiVersion`, `-SkipCertificateCheck`), `Get-LEGateVersion`, `Resolve-LEGateTest` (exact name, applicationTest only, throws on 0 or >1), `Start-LEGateRun` (idempotent: reuses an existing run whose `testRunName` equals the change id, else PUT start), `Wait-LEGateRun` (polls to `completed`, returns `timedOut` on timeout, writes `evidence/{changeId}/run.json`). Private: HTTP helper with bearer header, retry on GET only, token redaction; paging; JSON-lines logging; reason codes; UTC clock.
-- `tests/`: 68 Pester unit tests (mocked HTTP) green on Windows PowerShell 5.1 and PowerShell 7; integration tests that skip without env vars; `Invoke-Tests.ps1`; `fixtures/` with a README (empty of fixtures so far).
-- `.github/workflows/ci.yml` (hosted lint + unit, green) and `validate-patch.yml` (skeleton with the four jobs, parses, never run).
-- `scripts/Invoke-Smoke.ps1` (version call; with `-TestName` and `-ChangeId` it starts and waits), `Invoke-Lint.ps1`, `Initialize-DevEnvironment.ps1`.
-- `docs/`: architecture, verdict, api-notes (14 endpoints mapped from the appliance's OpenAPI export), setup, contributing, security, ai-agents, contracts (change adapter apply/verify/revert, verdict, promotion handoff).
-- `policies/default.policy.json` (functional-only, performance disabled, promotion mode) and `policy.schema.json`.
-- `adapters/change/README.md` (contract only, no scripts yet).
-- `CLAUDE.md`, `CHANGELOG.md`, `SECURITY.md`, `CONTRIBUTING.md`, `.editorconfig`, `PSScriptAnalyzerSettings.psd1`.
-- Verified: version call against the 6.8.6 appliance. Not yet: any real test run.
+Use a fresh change ID for every fresh demonstration, including separate local and workflow demonstrations. Resume only evidence for the same target, change/manifest, policy hash, and test. `Start-LEGateRun` currently matches only `testRunName` within the test and returns before checking policy. An optional hash in the comment does not enforce identity. This falls short of the key described in `docs/architecture.md`; reject mismatched resumes and never reuse an old success for a newly changed target.
 
-Known machine quirk: Joshua's Windows PowerShell has PowerShellGet 2.2.5 without matching PackageManagement, so `Install-Module` fails in 5.1; modules were installed from PowerShell 7 with `Save-Module` into the 5.1 user module path. `docs/setup.md` documents it.
+Serialize changes to a shared target across local runs and workflows. A change-ID-only concurrency key cannot protect one VM from different changes. Reset to a known state between demos, verify the reset, and retain restoration evidence. Stop continuous testing and confirm it has stopped before modifying that target again. No stop endpoint is documented here; use the appliance UI until an authorized API path is documented from the spec.
 
----
+### Contracts and the intentional break
 
-## 5. Content
+Follow `docs/contracts.md`: adapters receive `operation`, `changeId`, `target`, and `parameters`; results contain `status`, `changeId`, `operation`, `target`, `details`, `startedAt`, and `finishedAt`, with optional `message`. Preserve the distinction between a valid result with failed status and failure to produce a valid document. Do not substitute the old prompt's action/timestamp shape.
 
-### Part 1 (written, in review): "Your Deployment Ring Is a Waiting Room | Workspace Weekly"
+Break verification must prove the intended app-only break was successfully applied so Login Enterprise can detect it. The broken app's inability to launch is the expected changed state, not an adapter verification failure. Failure to apply/verify the intended break is preflight-failed/INCONCLUSIVE, not a demonstrated FAIL. Keep login and launcher dependencies intact. Revert must restore and verify the known state; a revert failure is recorded separately and does not rewrite a verdict already produced.
 
-Arc: opening scene (patch lands, security wants it out, EUC parks it in a ring) -> the clock got shorter this summer -> what promoting blind cost this year -> time in a ring is evidence in disguise -> what the gate produces (verdict table) -> where Login Enterprise fits -> what exists today (repo) -> what Part 2 builds -> send me your patch scenarios -> demo CTA.
+Use the nested manifest and promotion handoff shapes, policy hash format, file hashes/sizes, `approvedBy`, `approvedAt`, and approved evidence manifest hash from the contracts. Preserve unknown fields. Document deliberate extensions, such as per-app summaries, commit SHA, capture provenance, or continuous-test status, in contracts and changelog. Define representation of unavailable run/test metadata in partial evidence without fabricating values. Resolve manifest self-hashing and later-record handling explicitly rather than adding an undefined bundle hash.
 
-Assets: Figure 1 is the loop diagram. The repo link. Nothing else (a Figure 2 line was removed).
+### Failure preservation, job transfer, and approval
 
-Verified claims and their sources (do not re-flag these in reviews):
-- CISA BOD 26-04, issued 2026-06-10, risk-scored model, three-day deadline for publicly exposed, automatable, known-exploited vulnerabilities. https://www.cisa.gov/news-events/directives/bod-26-04-prioritizing-security-updates-based-risk
-- Microsoft Graph expedite doc says expediting is not designed for every month. https://learn.microsoft.com/en-us/graph/windowsupdates-deploy-expedited-update
-- January 2026 out-of-band updates: KB5077795 (sign-in failures in remote connection apps) https://support.microsoft.com/kb/KB5077795 and KB5078131 (apps hanging on cloud-backed storage, Outlook with PST on OneDrive) https://support.microsoft.com/help/5078131
-- Test Base for Microsoft 365 end of life 2024-05-31. https://learn.microsoft.com/en-us/microsoft-365/test-base/faq
-- Rapid7 2026 threat report (exploit windows mostly internet-facing). https://www.rapid7.com/about/press-releases/rapid7-2026-global-threat-landscape-report-shows-exploited-high-and-critical-severity-vulnerabilities-surged-105-as-attack-timelines-collapsed/
-- Login Enterprise v8-preview API has `application-test-run-overview` with base-run comparison; application tests carry `appThresholds` and `sessionThresholds` (login time, latency). Verified in the appliance spec.
+Establish a recoverable evidence context before preflight. Preserve obtained responses and adapter results when orchestration, polling, retrieval, or issue calls fail; emit INCONCLUSIVE with diagnostics when validation cannot finish. `Wait-LEGateRun` currently writes after polling, so a thrown request can bypass evidence writing. Always-upload cannot preserve files that were never written. Later promotion or continuous-handoff failures retain the original verdict and record the later failure separately, without claiming a successful handoff.
 
-Softened on purpose: KEV as a reference point "regulated industries and government contractors cite" (unsourced, kept vague); "conversations with customers" instead of "customer advisory board" (change back only if approved); no test count in the blog ("a unit test suite"); "Part 2" instead of dates.
+Transfer evidence explicitly between jobs: upload a reviewed sanitized validation bundle, download that exact artifact in promotion jobs, and verify identity and manifest hash. Never rely on a surviving self-hosted workspace or jobs sharing a machine. Keep the approved bundle immutable. Upload later promotion and continuous-testing records as separately identified artifacts linked to that bundle, and pass their identifiers onward. Records must survive cleanup without overwriting the approved evidence.
 
-Socials doc exists (LinkedIn, Slack external; sales and engineer emails internal; six short blurbs) with public-facing share blurbs and a trimmed engineer email. `[Paste blog URL]` placeholders remain.
+`GITHUB_ACTOR` identifies the workflow initiator, not necessarily the reviewer. Obtain manual reviewer identity and approval time from authoritative approval evidence and retain its provenance. Do not infer approval from dispatch identity or invent a timestamp. Leave the handoff incomplete if approval evidence is unavailable. Auto records identify `policy` only after guardrails pass. Production promotion remains simulated.
 
-Loose ends before publish: Schedule a demo link is the homepage placeholder; Workspace Weekly hub link (https://www.loginvsi.com/tag/workspace-weekly/) needs adding at the bottom; paste the live URL into the socials; Asana title, shared doc link, ready-for-review comment, marketing, posting.
+### Public evidence and runner isolation
 
-### Part 2 (to build and write): "Show Me the FAIL | Workspace Weekly"
+Keep original captures private. Before public artifact uploads, issue comments, example commits, or blog screenshots, create reviewed sanitized copies. Inspect JSON, logs, exception details, filenames, metadata, and screenshot pixels for tokens, real hosts/IPs/internal URLs, launcher/account names, customer identifiers, and identifying desktop content. Token masking alone is not sanitization. Hash the published sanitized bytes and preserve their relationship to private originals.
 
-Target draft: as soon as the live runs exist, ideally 2026-09-19. If live runs slip, publish with offline pieces and say the live runs follow. Never fake a run.
+The tracked `tests/results/pester.xml` includes machine/account metadata. `.gitignore` has a malformed `Thumbs.dbtests/results/` entry. Flag these for separate cleanup before further publication; fixing ignore rules alone will not untrack an existing file. Do not repeat that metadata in new docs or examples.
 
-Arc: Part 1 promised a gate that can say no; here it is. Open on the FAIL run. Walk the loop with real screenshots: dispatch, issue opens, adapter applies the broken update, LE runs, verdict FAIL with the failed step's screenshot, promote jobs skipped, issue stops, target reverted. Then the PASS run: same test, good update, approval, continuous test starts, issue closes. Then what a reader needs to do this themselves (two LE tests, a runner, secrets, one policy file). Portability note (Azure DevOps, GitLab, Jenkins, ServiceNow). What Part 3 covers. Scenario request. Demo CTA.
+Before live wiring, verify isolated self-hosted runner access, a dedicated minimally privileged service account, trusted workflow/branch restrictions, environment reviewer restrictions, and no fork/untrusted PR access to that runner. Dispatch-only YAML is not the whole boundary. Review action pinning, job permissions, artifact exposure/retention, workspace cleanup, and target access. No runner or GitHub setting was verified here.
 
-Assets to capture: LE UI with both runs by name; failed app execution with its screenshot; GitHub issue trail for FAIL and for PASS; workflow graph waiting on approval; the artifact; the continuous test running. Diagram can be reused or Claude Design can produce a second figure with the FAIL branch highlighted.
+## Local execution and private prerequisites
 
-Socials: same doc structure as Part 1. Lead with the FAIL.
+PowerShell 5.1 compatibility, one function per file, the thin HTTP wrapper, centralized logging/clock/reason codes, GET-only retry, and a pure evaluator remain technical rules. Do not add PSLoginEnterprise or generate a client. API version stays configurable with `v8-preview` as default; the earlier v7 comparison is in `docs/api-notes.md`.
 
-### Part 3 (later)
+Inspection found PowerShell 7.6.6 and Windows PowerShell 5.1.26100.9444, plus Git, GitHub CLI, and ripgrep. Windows PowerShell discovers Pester 5.7.1 and PSScriptAnalyzer 1.25.0. PowerShell 7 discovers Pester 5.7.1 but did not list PSScriptAnalyzer. Discovery does not prove runnable tooling: imports in 5.1 failed because execution policy blocked scripts/type data. Its policy list had every scope Undefined; PowerShell 7 reported LocalMachine RemoteSigned. Resolve execution prerequisites under the applicable machine policy in the intended shell before running scripts. No policy was changed here.
 
-Baselines and performance policy on top of the appliance's own thresholds and run comparison; image-level gate with a real Windows CU on a snapshot-reverted VM; real ServiceNow/Intune/Autopatch handoff; detection adapters; AI evidence explainer.
+Windows PowerShell lists PowerShellGet 2.2.5/1.0.0.1 and PackageManagement 1.0.0.1. PowerShell 7 also lists PackageManagement 1.4.8.1. The historical installation mismatch and Save-Module workaround remain in `docs/setup.md`; no installation was attempted. Do not assume that earlier installation issue is the only local blocker.
 
----
+| Input | Current wiring and unresolved work |
+|---|---|
+| Appliance URL/token | Connect accepts BaseUrl/ApiToken overrides, otherwise reads `LE_BASE_URL`/`LE_API_TOKEN`. Keep runtime values private. Historical version access does not confirm current read-results/start rights. |
+| Certificate flag | Smoke and Connect accept `-SkipCertificateCheck`; neither automatically reads `LE_SKIP_CERT_CHECK`. Integration translates only the exact value `1`. The old handoff's `true` example was inconsistent. Implement and document one explicit conversion in orchestration/workflow wiring. Prefer valid certificate trust. |
+| PowerShell 5.1 bypass | Connect installs a process-wide `ServerCertificateValidationCallback` returning true without restoration. Correct this before adding GitHub API calls to that process. PowerShell 7 uses per-request skipping. Do not describe current 5.1 behavior as appliance-scoped. |
+| Target credential | Target identity, WinRM reachability, and remote versus local execution are unconfirmed. Planned `TARGET_USER`/`TARGET_PASSWORD` secrets have no consumers. Define PSCredential transfer to every adapter operation or deliberate current-credential/local execution. Never serialize credentials into JSON/evidence. |
+| Demo inputs | Confirm target snapshot/reset, launcher/account readiness, workload, real versions/installers, test identities, and explicit required-app identities privately. Old examples are not runtime values. |
+| GitHub access | Wire `GITHUB_TOKEN`, `GITHUB_REPOSITORY`, and least-privilege job permissions for issue/handoff calls. Runner labels, secrets, reviewers, and branch restrictions remain unverified. |
 
-## 6. Editorial rules (every draft, every doc, every commit message)
+The API notes still label continuous handoff Part 3, while approved Part 2 includes starting an existing continuous test. The no-deployment language in `docs/ai-agents.md` continues to protect production/appliance configuration; approved Part 2 permits scoped lab adapters. Reconcile phase labels when implementing those components. Neither this scope nor an old prompt authorizes undocumented endpoints.
 
-No em dashes. No "actually", "critical", "matters". Prose over bullets except link lists. Vary paragraph length; single-sentence paragraphs next to long ones. Strip AI patterns: concession-contrast tics, negate-then-reframe, "not X but Y", symmetrical parallel sentences, rule-of-three cadence, vague openers, "worth", "seamless", "leverage", "robust". Reads like a person who works there. One metaphor per piece at most. Problem before product. No partner bashing. No roadmap promises with dates.
+## Next execution checkpoint: genuine success and failure captures
 
-Review every blog and socials draft with the codex-writing-skills repo (`C:\personalRepos\codex-writing-skills`) in this order: workspace-weekly, voice-and-tone, avoid-ai-style. Prompt in section 10.
+Joshua's next action is one private lab fixture-capture session, followed by reviewed sanitized copies for the offline build. Capture evidence before implementing retrieval/evaluation or wiring the pipeline.
 
----
+Confirm the disposable target can be restored and its workload exercises Notepad plus the chosen demo app. Keep continuous testing stopped. Capture a genuinely successful application run with a fresh change ID. Reset as needed, apply and verify a reversible app-only break, and capture another run under a new ID showing an application failure with login/connectivity intact. Restore the target immediately after failure capture and verify its known working state. Keep before/change/restore observations privately.
 
-## 7. Values Joshua provides (the runtime sheet)
+For both runs retain run, overview, events, sessions, and each session's app-execution responses. For failure include the relevant failure event/details present in documented responses, screenshot-list response, and actual screenshot download. Preserve request parameters, page boundaries/totals, API/appliance version, and consistent run/session/execution relationships. Confirm shapes against the spec; document discrepancies. If more failure detail requires an unmapped endpoint, add it from the spec first.
 
-Everything the repo needs to run in his lab. None of this goes in the repo. The model asks for blanks; it never guesses.
+Completion check: sanitized genuine captures cover both scenarios; failed app and screenshot are traceable by their IDs; completeness/pagination is accounted for; and private restoration evidence confirms a usable target with continuous testing stopped. Editing successful JSON into a failed fixture does not satisfy this. Call these successful/failed appliance captures until the future evaluator produces PASS/FAIL bundles.
 
-| Value | Where it is used | Status |
-|---|---|---|
-| `LE_BASE_URL` (https://host, no trailing slash, no /publicApi) | env var locally; repository secret | known to Joshua |
-| `LE_API_TOKEN` (system access token; role must read tests/runs and start tests) | env var locally; repository secret | exists, verified with version call |
-| `LE_SKIP_CERT_CHECK` (true if lab cert is self-signed) | env var / repository variable | decide |
-| Application test name `patch-gate-app` | policy file, smoke, workflow | to create |
-| Continuous test name `patch-gate-continuous` | workflow input | to create |
-| Target computer name (the VM the launcher logs into and the adapter changes) | workflow input `target_computer` | to decide |
-| `TARGET_USER` / `TARGET_PASSWORD` (local admin on target for WinRM) or "runner is the target" | repository secrets | to decide |
-| Demo app and pinned versions (e.g. 7-Zip 24.08 -> 24.09, winget id `7zip.7zip`) | `examples/changes/7zip-update.json` | to decide |
-| Launcher name (for the model's awareness only) | not in repo | known |
-| Test account name (for awareness only) | not in repo | known |
-| Runner machine name and labels (`self-hosted`, `windows`) | workflow `runs-on` | to install |
-| GitHub environment `promotion-approval` with Joshua as reviewer | `promote-manual` job | to create |
-| Change ids for the demo: e.g. `CHG-noop-1`, `CVE-2026-DEMO-7zip-pass`, `CVE-2026-DEMO-7zip-fail` | dispatch input; each must be unique because start is idempotent by run name | pick when running |
-| Test ids and run ids | returned by the API; recorded in evidence manifests | produced at runtime |
+Joshua then supplies the implementation prompt. Offline implementation and tests precede runner/approval wiring and live acceptance. Each fresh demonstration uses a new ID and a verified target reset.
 
----
+## Content, editorial preferences, and acceptance
 
-## 8. Minimal manual setup, with a check for each step
+Part 1, **Your Deployment Ring Is a Waiting Room | Workspace Weekly**, is published and its socials are posted. The old review/publish/Asana/posting checklist is historical. Its arc moves from patch pressure and ring dwell time to evidence, verdicts, Login Enterprise's role, the repo, and the Part 2 promise. Figure 1 is the loop. Keep public wording as conversations with customers rather than naming advisory-board participants; avoid test-count claims and dated roadmap promises.
 
-Everything here is Joshua's hands, no agent, no credits. Do them in order. Each has a check; do not move on until the check passes.
+Part 2 opens on the real FAIL: dispatch, issue, verified break, application failure, screenshot, skipped promotion, issue left open, restored target. Follow with good update, PASS, approval, simulated promotion, continuous test, and issue closure. Explain reproduction prerequisites and portability, then future scope, a scenario request, and a demo CTA. Never portray offline tests as a live demonstration. If live acceptance slips, state the limitation and leave those deliverables incomplete.
 
-1. **Target VM.** A Windows VM the Login Enterprise launcher can log into (RDP connector is fine) with a test account. Snapshot it once configured so demo runs can be reset.
-   Check: you can RDP to it with the test account.
-2. **Launcher.** Registered and online in the appliance.
-   Check: launcher shows online in the appliance UI.
-3. **Demo app.** Pick 7-Zip (winget `7zip.7zip`, MSIs on 7-zip.org) or Notepad++ (`Notepad++.Notepad++`). Install the "before" version on the target. Write down before and after versions and sources.
-   Check: the before version is installed and opens.
-4. **Workload for the demo app.** Record one with the Script Recorder or write it by hand: launch the app, do one visible action (7-Zip File Manager: expand a folder; Notepad++: open a file), close. The app the adapter breaks must be exercised by the test or breaking it changes nothing. Notepad can use a built-in or template workload.
-   Check: the workload runs green on its own in a test.
-5. **Application test `patch-gate-app`.** One account, one launcher, run once then stop. Applications: Notepad plus the demo app. Default thresholds.
-   Check: run it from the UI; result successful, all apps green.
-6. **Continuous test `patch-gate-continuous`.** Same applications, schedule always-on, left stopped.
-   Check: exists, state not running.
-7. **WinRM from runner to target** (skip if using the fallback): on target `Enable-PSRemoting -Force`, firewall port 5985 open; if not domain-joined, add target to TrustedHosts on the runner. Choose a local admin credential for `TARGET_USER`/`TARGET_PASSWORD`.
-   Check: `Invoke-Command -ComputerName <target> -Credential <cred> { hostname }` returns the target's name.
-   Fallback: install the self-hosted runner on the target VM itself and run adapters with `-TargetComputer localhost`. Removes the whole class of remoting failures.
-8. **Smoke run.** In a terminal with `LE_BASE_URL` and `LE_API_TOKEN` set: `.\scripts\Invoke-Smoke.ps1 -TestName 'patch-gate-app' -ChangeId 'baseline-2026-09-17' -SkipCertificateCheck`.
-   Check: reaches `completed`, `result = successful`, `appFailureResults.successCount == totalCount`, and `evidence/baseline-2026-09-17/run.json` exists. A 403 on start means the token's role cannot start tests.
-9. **Fixtures.** From that run, via Swagger UI (Authorize with the bearer token): `GET /test-runs/{id}`, `GET /application-test-run-overview/{id}`, `GET /test-runs/{id}/events?count=500`, `GET /test-runs/{id}/user-sessions?count=100`, and `GET /test-runs/{id}/user-sessions/{sessionId}/app-executions?count=200`. Save as JSON in `tests/fixtures/` per its README. Sanitize: remove hostnames, launcher names, account names; ids are fine.
-   Check: `git grep -i "<hostname-fragment>"` and `git grep -i "<account-name>"` return nothing.
-10. **Screenshot** the passing run in the LE UI test run list showing the run name.
-11. **Self-hosted runner.** GitHub repo Settings > Actions > Runners > New self-hosted runner > Windows. Install as a service on a machine inside the network that reaches the appliance and the target (or on the target, per the fallback). Labels `self-hosted`, `windows`. Then Settings > Actions > General: require approval for all outside collaborators on fork PRs.
-   Check: runner shows Idle in the Runners page.
-12. **Secrets, variables, environment.** Secrets `LE_BASE_URL`, `LE_API_TOKEN`, `TARGET_USER`, `TARGET_PASSWORD`. Variable `LE_SKIP_CERT_CHECK` if needed. Environment `promotion-approval` with Joshua as required reviewer.
-   Check: all present in Settings.
+Capture the LE UI with both named runs, failed execution/screenshot, both issue trails, workflow awaiting approval, sanitized artifact, and continuous test running. Reuse the diagram or highlight its FAIL branch. Socials lead with the FAIL, following the existing LinkedIn/external Slack/internal sales and engineer email structure.
 
-Steps 1 to 10 before Prompt A. Steps 11 and 12 before Prompt B.
+Joshua prefers direct, terse, casual guidance and concrete checkpoints. Keep work bounded to Part 2 and offline where possible. Public copy should be friendly, willing to challenge dwell time, and honest about what exists. Problem before product, no partner bashing, at most one metaphor per piece. No em dashes; avoid actually, critical, and matters in editorial copy. Vary sentence and paragraph lengths. Remove generic business language, repeated openings, concession/contrast formulas, symmetrical lists, and canned transitions. Prefer prose in articles/socials except link lists; technical tables/checklists are useful here.
 
-Change ids: every run needs a new one. Re-running the same id resumes the existing run on purpose.
+Review drafts with Joshua's separate codex-writing-skills repository in this order: workspace-weekly, voice-and-tone, avoid-ai-style. Preserve factual claims and links, flag unsupported claims, and reread for repetition and unnatural cadence. This is a review preference, not an embedded prompt to execute verbatim.
 
----
+Part 2 is done when real dispatches show both outcomes: good update produces PASS, reviewed evidence, manual approval, simulated promotion, continuous start and issue closure; verified break produces FAIL, failed-execution screenshot, skipped promotion and an open issue. Sanitized bundles, target restoration, lint/unit checks, reproducible runbook, README quickstart, portability notes, and reviewed article/social drafts must also exist. Current code does not meet this check.
 
-## 9. Remaining engineering: the prompts
+## Deferred scope
 
-Run in a coding agent opened at the repo root. Each starts by reading `CLAUDE.md` and the docs. Do not combine A and B.
+Baselines/performance policy on top of appliance thresholds/comparison; image-level validation with a real Windows cumulative update on a snapshot-reverted VM; detection adapters for scanners/catalogs/Autopatch; real ServiceNow, Intune, Autopatch, Citrix, or Horizon handoffs; and customer interviews remain later work and do not block Part 2. Advanced auto guardrails beyond functional policy are deferred.
 
-### Prompt A: offline build against fixtures (one shot, medium effort)
-
-```
-Read HANDOFF.md first. Then read CLAUDE.md, README.md, docs/architecture.md, docs/verdict.md, docs/api-notes.md, docs/contracts.md, and tests/fixtures/README.md. Real fixtures from a completed application test run are in tests/fixtures/. docs/api-notes.md is the only source for endpoint paths and shapes. If you need an endpoint it does not list, stop and ask.
-
-Build everything below offline. No appliance calls are needed; every new function is unit tested against the fixtures with Invoke-RestMethod mocked. PowerShell 5.1 compatible. One function per file. Update the module manifest, CHANGELOG, and docs as you go. Keep prose human: no em dashes, no "actually", "critical", "matters".
-
-1. Results retrieval, in src/LEGate/Public/: Get-LEGateRunOverview (GET /application-test-run-overview/{id}, optional -BaselineRunId passed as testRunIds), Get-LEGateRunSessions, Get-LEGateRunAppExecutions (all sessions, paged), Get-LEGateRunEvents (optional -EventTypes), Get-LEGateRunScreenshots (list and download, only for executions in endedWithErrors, saved under evidence/{changeId}/screenshots/). Plus Export-LEGateRunResults that calls all of them and writes raw JSON under evidence/{changeId}/raw/ before anything evaluates.
-
-2. Evaluator: src/LEGate/Public/Test-LEGatePolicy. Pure function. Inputs: the run object, the overview, the events list, the policy object. Output: a verdict object matching docs/verdict.md (verdict, reasonCodes, changeId, testName, testRunId, policyName, policyHash, promotionMode, evaluatedAt, summary, plus an applications array with per-app status). Rules: result internalError or cancelled -> INCONCLUSIVE; result incomplete -> INCONCLUSIVE results-incomplete; events launcherOffline or connectionInitializationTimeout -> INCONCLUSIVE launcher-or-connection-error; timedOut -> INCONCLUSIVE run-timeout; otherwise every required application (policy functional.requiredApplications, or all applications in the overview when empty) must have appExecutionSuccessful true and appFailureResults.successCount == totalCount and loginSuccessful true -> PASS, else FAIL. Performance is recorded (overThreshold, applicationThresholdExceeded, loginTimeThresholdExceeded) but does not affect the verdict while policy.performance.enabled is false. Policy hash is SHA-256 of the policy file bytes. Unit tests must cover every branch using the fixtures and modified copies of them (build a broken-app variant and an incomplete variant in the test).
-
-3. Evidence bundle: Export-LEGateEvidence. Writes evidence/{changeId}/manifest.json (changeId, testName, testId, testRunId, testRunName, appliance version, apiVersion, policyName, policyHash, baselineRunId, git SHA from GITHUB_SHA or git rev-parse, timestamps, list of files with SHA-256), verdict.json, summary.md (human-readable: verdict, reason codes, per-app table, links to raw files and screenshots). Bundle hash written to manifest. Unit tested.
-
-4. Change adapters in adapters/change/: the contract is in docs/contracts.md. Implement app-update.ps1 (parameters: -Action apply|verify|revert, -TargetComputer, -Credential or -UseCurrentCredentials, -Manifest path). The manifest is a JSON file in examples/changes/ describing the app, before version, after version, install source (winget id or MSI URL), and the executable path. apply installs the after version over WinRM via Invoke-Command (or locally when -TargetComputer is localhost); verify checks the installed version; revert reinstalls the before version. Also break.ps1 with the same parameters: apply installs the after version and then renames the executable to .disabled; revert renames it back. The break must surface in Login Enterprise as an application failure on that app (appExecution endedWithErrors) so the verdict is FAIL, not INCONCLUSIVE; it must only touch the app, never anything login or connection depends on. noop.ps1 returns success for pipeline testing. Every adapter returns JSON {status, changeId, action, details, timestamp}. Unit test argument handling and output shape with Invoke-Command mocked.
-
-5. Handoff adapter (the "ticket"): src/LEGate/Public/ functions New-LEGateChangeIssue (opens an issue titled "[change] {changeId}" with the manifest summary, returns issue number; idempotent, reuses an open issue with that title), Add-LEGateChangeComment (stage name, message, optional links), Close-LEGateChangeIssue. Uses the GitHub REST API with GITHUB_TOKEN and GITHUB_REPOSITORY from the environment. Also Write-LEGatePromotionRecord that writes evidence/{changeId}/promotion-record.json (changeId, verdict, approver from GITHUB_ACTOR, promotionMode, timestamp, continuousTestStarted). Unit tested with mocks.
-
-6. Continuous test handoff: Start-LEGateContinuousTest. Resolves a continuousTest by exact name, checks state is not running, PUT start. Unit tested.
-
-7. Orchestration script: scripts/Invoke-Gate.ps1. Parameters: -ChangeId, -PolicyFile, -ChangeManifest, -PromotionMode, -Adapter (name), -TargetComputer, -BaselineRunId optional, -ContinuousTestName optional, -Revert switch. Steps in order with logging and an issue comment at each: preflight (policy parses against schema, test resolves, test state enabled, no run in progress), adapter apply and verify, start run, wait, export results, evaluate, export evidence, write verdict to $env:GITHUB_OUTPUT when present, exit 0 for PASS, 1 for FAIL, 2 for INCONCLUSIVE. -Revert runs only the adapter revert so the demo can leave the target changed for screenshots. Unit test the step sequencing with every module function mocked.
-
-8. Wire .github/workflows/validate-patch.yml to the module. Add permissions: issues: write, contents: read at the top so GITHUB_TOKEN can open and comment on issues. validate job runs Invoke-Gate.ps1 with secrets LE_BASE_URL, LE_API_TOKEN, TARGET_USER, TARGET_PASSWORD (built into a PSCredential inside the step, never echoed), variable LE_SKIP_CERT_CHECK, inputs change_id, policy_file, promotion_mode, plus new inputs change_manifest (default examples/changes/7zip-update.json), adapter (choice: app-update, break, noop; default app-update), target_computer. Upload evidence/{changeId}/ as an artifact always. promote-manual and promote-auto call Write-LEGatePromotionRecord and comment on the issue. continuous-testing job calls Start-LEGateContinuousTest with input continuous_test_name (default patch-gate-continuous) and closes the issue. Keep the file parseable: every run: value is a block scalar.
-
-9. Examples: examples/changes/7zip-update.json and examples/changes/7zip-break.json with placeholder versions for Joshua to fill in. examples/evidence/ with a sanitized PASS bundle generated from the fixtures by running the evaluator and exporter in a test.
-
-10. Docs: update docs/architecture.md and the README "Repository layout" for the new pieces. Add docs/runbook.md: how to run one change end to end from dispatch to closed issue, how to run the FAIL demo, how to revert the target, how to reset with the VM snapshot. Add docs/pipelines/ with azure-devops.md, gitlab.md, jenkins.md, servicenow.md: same three jobs, same verdict.json and exit codes, where the approval gate and secrets live on each platform; for ServiceNow the issue comments become change-request work notes and the bundle becomes an attachment. One page each.
-
-Run lint and all unit tests, fix what they flag, commit in logical chunks, push to origin main, and give me a report listing every new file and every test count.
-```
-
-### Prompt B: live wiring and the two runs (expect iteration, medium effort)
-
-```
-Read HANDOFF.md first, then CLAUDE.md and docs/runbook.md. The self-hosted runner is registered with labels self-hosted and windows. Secrets LE_BASE_URL, LE_API_TOKEN, TARGET_USER, TARGET_PASSWORD and variable LE_SKIP_CERT_CHECK are set. Environment promotion-approval exists with a reviewer. Application test patch-gate-app and continuous test patch-gate-continuous exist. The target computer is: <Joshua fills in>. examples/changes/7zip-update.json and 7zip-break.json have real versions.
-
-Do not change the module's logic to make a run pass. If a run fails because of the environment, tell me what to fix in the environment. If it fails because of a bug, fix the bug with a unit test that would have caught it.
-
-1. Run scripts/Invoke-Gate.ps1 locally on the runner machine with -Adapter noop -ChangeId CHG-noop-1 -PromotionMode manual. Confirm the issue opens, the run completes, the verdict is PASS, the evidence bundle is written.
-2. Run it with -Adapter app-update -ChangeId CVE-2026-DEMO-7zip-pass -ChangeManifest examples/changes/7zip-update.json. Confirm PASS and that the LE UI shows the run named with the change id.
-3. Run it with -Adapter break -ChangeId CVE-2026-DEMO-7zip-fail -ChangeManifest examples/changes/7zip-break.json. Confirm FAIL, the issue stops at the FAIL comment, and screenshots for the failed execution are in the bundle. Then run with -Revert.
-4. Dispatch validate-patch from GitHub for the PASS case with promotion_mode manual. Confirm the validate job succeeds, the artifact uploads, promote-manual waits for approval, and after I approve, continuous-testing starts patch-gate-continuous and closes the issue.
-5. Dispatch it again for the FAIL case. Confirm the promote jobs are skipped and the issue is left open at FAIL.
-6. Copy the sanitized PASS and FAIL bundles into examples/evidence/. Update docs/runbook.md with anything that surprised you. Commit and push.
-
-List the screenshots I should take for the blog: both runs by name in the LE UI, the failed app execution with its screenshot, the GitHub issue trail for both, the workflow graph waiting on approval, the artifact, the continuous test running.
-```
-
-### Prompt C: quickstart and polish (short, low effort)
-
-```
-Read HANDOFF.md first, then the whole repo. Write the README quickstart: clone, run tests, set env vars, create the two LE tests (link to docs/runbook.md), run the smoke, dispatch the workflow. Under ten steps. Sweep every file for em dashes, the banned words, hostnames, tokens, and account names. Confirm CHANGELOG 0.1.0 lists everything shipped and bump the module version to 0.1.0 released. Confirm ci.yml is green. Commit and push.
-```
-
-If credits die mid-prompt: "Read HANDOFF.md and git log --oneline. Continue Prompt A from step N." Every prompt commits in chunks for this reason.
-
----
-
-## 10. Review prompt for blog and socials (codex-writing-skills repo)
-
-```
-Review <file>.md using workspace-weekly then voice-and-tone then avoid-ai-style. Overriding rules: no em dashes; no "actually", "critical", or "matters"; no bullet lists except link lists; vary paragraph length; strip AI patterns. Do not change factual claims or links. Do not add hedging. Give me <file>-edited.md and a short change list. Flag any claim you cannot back.
-```
-
-Tell it the verified claims from section 5 are confirmed so it does not re-flag them.
-
----
-
-## 11. Definition of done for Part 2
-
-- `validate-patch` dispatched from GitHub for the good update produces PASS, uploads an evidence artifact, waits for approval, and after approval starts `patch-gate-continuous` and closes the issue.
-- Dispatched with the `break` adapter it produces FAIL, promote jobs are skipped, the issue stays open at the FAIL comment, and the failed execution's screenshot is in the bundle.
-- The LE UI shows both runs under `patch-gate-app` with their change ids as run names.
-- `examples/evidence/` holds a sanitized PASS and FAIL bundle.
-- CI green, lint clean, evaluator unit tests cover every branch.
-- `docs/runbook.md` lets someone else reproduce it.
-- Part 2 blog draft reviewed by the writing skills; socials drafted.
-
----
-
-## 12. Risks and fallbacks
-
-- WinRM blocked or flaky: runner on the target VM, `-TargetComputer localhost`.
-- Demo app has no workload: the break must hit an app the test exercises; record the workload (section 8 step 4) before anything else.
-- Break produces INCONCLUSIVE instead of FAIL: the break touched something login or the launcher depends on. Narrow it to the app's executable.
-- Test runs longer than `maxWaitMinutes`: raise it in the policy. INCONCLUSIVE run-timeout is correct behavior, never FAIL.
-- Issue calls fail: `permissions: issues: write` in the workflow.
-- Certificate errors: `LE_SKIP_CERT_CHECK=true`; never disable validation globally.
-- Fixtures leak something: grep for hostname and account name before committing.
-- Time runs out: publish Part 2 with offline evidence and say live runs follow. Do not fake.
-
----
-
-## 13. AI skill (Part 3, only if credits remain)
-
-Decision: no AI in the verdict path. The one piece that adds value without governance trouble is a read-only evidence explainer.
-
-```
-Read CLAUDE.md, docs/ai-agents.md, docs/verdict.md, docs/contracts.md, and one PASS and one FAIL bundle in examples/evidence/. Create skills/evidence-explainer/SKILL.md (Agent Skills format: frontmatter with name and description, then instructions) for an assistant handed a path to an evidence bundle. Its job: explain in plain language why the verdict happened, which applications or steps failed and where their screenshots are, which reason codes fired and what they mean, and what to investigate next. Every claim cites a file path inside the bundle. It may only read files. It must never start tests, call the appliance, edit policies or baselines, or restate the verdict as anything other than what verdict.json says. Include examples/ with one worked explanation for the FAIL bundle. Add a section to docs/ai-agents.md describing the skill and its limits. No code beyond SKILL.md and examples.
-```
-
----
-
-## 14. Rules for the public repo
-
-- No appliance hostnames, IPs, tokens, launcher names, account names, or internal URLs anywhere: code, docs, fixtures, screenshots, commit messages.
-- No customer names or test names that identify a customer.
-- Screenshots from the lab only.
-- The API spec may be referenced; every Login Enterprise customer can see it.
-- Self-hosted runner on a public repo: fork PR workflows require approval; `validate-patch.yml` stays `workflow_dispatch` only.
-
----
-
-## 15. Deferred (do not build this week)
-
-Detection adapters (scanner webhook, patch catalog, Autopatch release). Real ServiceNow, Intune, Autopatch, Citrix, Horizon handoffs. Baselines and performance policy. Image-level gate with a real Windows CU. AI evidence explainer. Customer interviews (BankUnited, DTCC) fold in when they land; not blocking.
-
----
-
-## 16. Trello
-
-Card "Workspace Weekly: Your Deployment Ring Is a Waiting Room": done: define MVP, create repo, export and map spec, build module/tests/CI/docs, verify version call, diagram, blog draft, blog review, socials draft, socials review. Open: Asana, shared doc link, ready-for-review comment, marketing, posting, customer interviews.
-
-Card "Workspace Weekly: Show Me the FAIL": checklist created (LE tests, fixtures, runner, results retrieval, evaluator, adapters, PASS and FAIL runs, evidence bundle, workflow wiring, pipeline notes, README, diagram, blog, review, socials, Asana, marketing, posting, customer scenarios). Nothing done.
-
----
-
-## 17. Model budget
-
-Prompt A: Opus 5 or Sonnet 5, medium. Prompt B: Sonnet 5, medium, several short turns. Prompt C: Sonnet 5 or Haiku, low. Reviews: whatever the writing-skills repo runs on. AI skill: only after Part 2 ships.
+An optional Part 3 AI evidence explainer is read-only: explain the existing verdict, failures/screenshots, reason codes, and investigation leads with file citations. It must never run tests, call the appliance, edit policy/baselines, or replace the deterministic verdict. Consider it only after Part 2 ships. Production deployment remains outside this reference implementation.
