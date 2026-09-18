@@ -28,6 +28,21 @@ Describe 'Functional gate and evidence boundaries' {
         (Test-LEGatePolicy -Results $n -Policy $policy -Context $context | ConvertTo-Json -Depth 20) |
             Should -BeExactly (Test-LEGatePolicy -Results $n -Policy $policy -Context $context | ConvertTo-Json -Depth 20)
     }
+    It 'makes every malformed event type inconclusive while retaining valid event handling' {
+        $cases = @(@{ value = $null }, @{ value = '' }, @{ value = ' ' }, @{ value = @('launcherOffline') }, @{ value = @() }, @{ value = @{ name = 'launcherOffline' } }, @{ value = 1 }, @{ value = $true })
+        foreach ($case in $cases) {
+            $capture.events = @([pscustomobject]@{ type = $case.value })
+            $normalized = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
+            $normalized.complete | Should -BeFalse
+            (Test-LEGatePolicy -Results $normalized -Policy $policy -Context $context).verdict | Should -Be 'INCONCLUSIVE'
+        }
+        $capture.events = @([pscustomobject]@{ type = 'testRunFinished' })
+        $normalized = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
+        (Test-LEGatePolicy -Results $normalized -Policy $policy -Context $context).verdict | Should -Be 'PASS'
+        $capture.events = @([pscustomobject]@{ type = 'launcherOffline' })
+        $normalized = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
+        (Test-LEGatePolicy -Results $normalized -Policy $policy -Context $context).verdict | Should -Be 'INCONCLUSIVE'
+    }
     It 'rejects wrong run IDs and execution relationships' {
         $capture.run.id = 'other'
         (ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run').integrityValid | Should -BeFalse

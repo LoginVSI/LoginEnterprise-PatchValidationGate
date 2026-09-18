@@ -1,6 +1,26 @@
 # Implementation progress
 
-Updated 2026-09-18. Offline completion gates passed. No appliance access or live workflow dispatch.
+Updated 2026-09-18. Repair pass from 90189be verified offline. No appliance access or live workflow dispatch.
+
+## Repair checkpoint
+
+Fixed: restoration invalidation/recovery before mutation, successful restoration before optional reporting, locked promotion state check/recording, scalar event validation and polling/request deadlines. Regression tests exercise interrupted/failed restoration, reporting failure, stale promotion/continuous handoff, lock ownership, malformed events and late completion through the affected functions.
+
+Partially resolved: approval-file delivery waits at most 120 seconds and checks repository/run/attempt/environment/reviewer. Authoritative approval-time acquisition remains externally blocked; matching envelope fields do not prove provenance. The exact source/access/correlation prerequisite is in [approval evidence](approval-evidence.md). The [first-capture bootstrap](first-live-capture.md) now includes exclusive ownership, independent recovery, actual commands/UI steps and restoration verification.
+
+| Final repair verification | Windows PowerShell 5.1 | PowerShell 7 |
+|---|---|---|
+| Full offline Pester suite | 112 passed, 0 failed, 0 skipped | 112 passed, 0 failed, 0 skipped |
+| PSScriptAnalyzer | No findings | No findings |
+| Synthetic scenarios and bundle integrity | PASS, FAIL, INCONCLUSIVE; all verified | PASS, FAIL, INCONCLUSIVE; all verified |
+
+Workflow YAML/pins/gate conditions and promotion state-variable checks, skill structure/example integrity, and the bundled skill validator passed. A PowerShell 5.1 lock holder blocked a PowerShell 7 contender using the same local state directory and case-normalized target. New documentation command blocks parsed without execution, and local links passed. Final diff/whitespace and private-data review passed; private audit/captures, NUnit reports and scenario output remain ignored and excluded from the repair commit.
+
+Failure encountered and resolved: the initial approval/deadline targeted run had 6 passes and 2 failures because the new delivery function was absent from the module manifest export list. Added the export; both final full suites include and pass those tests. The earlier 36-test PowerShell 7 lifecycle/normalization/polling run also passed. No assertions were weakened. All results are offline; they do not establish actual MSI recovery, appliance semantics, shared-runner locking or live approval provenance.
+
+Next concrete operator action: reserve exclusive ownership of the disposable target, stop continuous testing and verify an independent recovery baseline, then follow first-live-capture.md for the supervised baseline/failure/export/restore session. Private capture is conditional on those prerequisites. Full demonstration remains blocked on genuine API/installer/restoration acceptance, runner protections and authoritative approval-time acquisition.
+
+## Original implementation checkpoint
 
 - [x] Paths, certificate isolation, strict paging, policy validation and pure evaluator.
 - [x] Retrieval, normalization, private evidence integrity and publication projection.
@@ -10,7 +30,7 @@ Updated 2026-09-18. Offline completion gates passed. No appliance access or live
 - [x] Fresh full suites, lint, static checks, bundle inspection and staged review.
 - [x] Implementation committed and pushed normally to origin/main as 2d12b87.
 
-## Verification on 2026-09-18
+## Original verification on 2026-09-18, before this repair
 
 | Check | Windows PowerShell 5.1.26100.9444 | PowerShell 7.6.6 |
 |---|---|---|

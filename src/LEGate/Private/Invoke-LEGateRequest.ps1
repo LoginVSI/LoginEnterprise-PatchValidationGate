@@ -44,7 +44,9 @@ function Invoke-LEGateRequest {
         [int]$MaxAttempts = 3,
 
         [ValidateRange(0, 300)]
-        [int]$TimeoutSeconds = 60
+        [int]$TimeoutSeconds = 60,
+
+        [datetime]$Deadline
     )
 
     $uri = '{0}/publicApi/{1}{2}' -f $Session.BaseUrl, $Session.ApiVersion, $Path
@@ -95,6 +97,14 @@ function Invoke-LEGateRequest {
     if ($OutFile) { $splat['OutFile'] = $OutFile; $headers.Accept = 'application/octet-stream' }
     $lastError = $null
     for ($attempt = 1; $attempt -le $attempts; $attempt++) {
+        if ($PSBoundParameters.ContainsKey('Deadline')) {
+            $remaining = [Math]::Floor(($Deadline - (Get-LEGateUtcNow)).TotalSeconds)
+            # TimeoutSec is integral on PS5.1; zero means unlimited, not expired.
+            if ($remaining -lt 1) { throw (New-Object TimeoutException('Request deadline exhausted.')) }
+            $limit = $TimeoutSeconds
+            if ($limit -eq 0) { $limit = 300 }
+            $splat.TimeoutSec = [int][Math]::Min($limit, $remaining)
+        }
         Write-LEGateLog -Level Debug -Message 'API request' -Fields @{ method = $Method; uri = $uri; attempt = $attempt; maxAttempts = $attempts }
         try {
             $response = Invoke-RestMethod @splat
@@ -114,6 +124,11 @@ function Invoke-LEGateRequest {
             $retryable = ($null -eq $statusCode) -or ($statusCode -ge 500)
             if ($retryable -and $attempt -lt $attempts) {
                 $delay = 2 * $attempt
+                if ($PSBoundParameters.ContainsKey('Deadline')) {
+                    $remaining = [Math]::Floor(($Deadline - (Get-LEGateUtcNow)).TotalSeconds)
+                    if ($remaining -lt 1) { throw (New-Object TimeoutException('Request deadline exhausted.')) }
+                    $delay = [int][Math]::Min($delay, $remaining)
+                }
                 Write-LEGateLog -Level Warn -Message 'API request failed, retrying' -Fields @{
                     method     = $Method
                     uri        = $uri
@@ -128,6 +143,8 @@ function Invoke-LEGateRequest {
             break
         }
     }
+
+    if ($PSBoundParameters.ContainsKey('Deadline') -and (Get-LEGateUtcNow) -ge $Deadline) { throw (New-Object TimeoutException('Request deadline exhausted.')) }
 
     # Build a clear, redacted error from the last failure.
     $exception = $lastError.Exception

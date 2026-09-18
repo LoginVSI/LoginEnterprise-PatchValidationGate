@@ -35,9 +35,15 @@ All unresolved response fields/envelopes and required captures are centralized i
 
 GitHub review history establishes reviewer identity but documents no approval timestamp. Manual handoff fails unless matching authoritative time evidence is supplied and retained. GITHUB_ACTOR is not the reviewer. Auto mode supports only functional PASS and complete-results guards.
 
+The audit repairs invalidate reuse before restoration, retain recovery-required/interrupted states, reject malformed event types, lock promotion state checks through recording and reject late completion. Continuous handoff reacquires the shared lock and rechecks state. Restoration reporting cannot resurrect validated state. Offline regression evidence is recorded in docs/implementation-progress.md.
+
+Approval-file delivery now waits at most 120 seconds and requires run-attempt correlation in addition to repository/run/environment/reviewer. This is partial resolution only. Matching fields do not establish authoritative provenance; docs/approval-evidence.md records the external acquisition prerequisite. Full live demonstration remains blocked.
+
 ## Next live checkpoint
 
 Joshua should perform one private baseline/failure capture session on the disposable target. Configure patch-gate-app and patch-gate-continuous with Notepad and the chosen demo application, keep continuous testing stopped, capture a genuine success and verified reversible app-only failure, then restore and verify the initial state.
+
+Follow docs/first-live-capture.md: reserve exclusive ownership and verify an independent recovery baseline first. UI-created runs and the exporter establish draft mappings before the gate's capture-confirmed preflight. Do not relabel synthetic profiles. Standalone adapters require that exclusive reservation because they do not acquire gate locks.
 
 Use scripts/Export-LiveCapture.ps1 with supplied run IDs, new private directories and reviewed response mappings. Completion: all session/execution/page relationships are accounted for, the failed execution links to actual screenshot bytes, the profile is confirmed against captures/spec, both required application IDs are configured, and restoration is recorded.
 

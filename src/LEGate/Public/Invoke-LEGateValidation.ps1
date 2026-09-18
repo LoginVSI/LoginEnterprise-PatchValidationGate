@@ -66,18 +66,35 @@ function Invoke-LEGateValidation {
         if ($Credential) { $adapterArgs.Credential = $Credential }
         if ($Revert) {
             if ($test.state -ne 'enabled') { throw 'Application test is still using the target.' }
-            if ($state.stage -in @('applying', 'starting', 'recovery-required') -and -not $RecoveryConfirmed) { throw 'Uncertain target state requires explicit operator recovery confirmation.' }
+            if ($state.stage -in @('applying', 'starting', 'reverting', 'recovery-required') -and -not $RecoveryConfirmed) { throw 'Uncertain target state requires explicit operator recovery confirmation.' }
             if ($state.runId) {
                 $run = Invoke-LEGateRequest -Session $session -Method GET -Path ('/test-runs/' + $state.runId)
                 if ($run.id -cne $state.runId -or $run.state -ne 'completed') { throw 'Run is not confirmed completed.' }
             }
-            $restoration = Invoke-LEGateChangeAdapter @adapterArgs -Operation revert
-            Write-LEGateJson -Path (Join-Path -Path $folder -ChildPath 'restoration.json') -Value $restoration
-            if ($restoration.status -ne 'succeeded' -and $restoration.status -ne 'skipped') { throw 'Restoration failed.' }
-            if ($ReportIssue -and $state.issueNumber) { Add-LEGateChangeComment -IssueNumber $state.issueNumber -Stage restoration -Outcome succeeded }
-            $state.stage = 'reverted'
+            # Invalidate reusable validation before any target mutation, including a crash.
+            $state.stage = 'reverting'
             Write-LEGateJson -Path $lock.leasePath -Value $state
-            return [pscustomobject]@{ restored = $true; privatePath = $folder; exitCode = 0 }
+            try {
+                $restoration = Invoke-LEGateChangeAdapter @adapterArgs -Operation revert
+                Write-LEGateJson -Path (Join-Path -Path $folder -ChildPath 'restoration.json') -Value $restoration
+                if ($restoration.status -notin @('succeeded', 'skipped')) { throw 'Restoration failed.' }
+                $state.stage = 'reverted'
+                Write-LEGateJson -Path $lock.leasePath -Value $state
+            }
+            catch {
+                $state.stage = 'recovery-required'
+                Write-LEGateJson -Path $lock.leasePath -Value $state
+                throw
+            }
+            $restoreExitCode = 0
+            if ($ReportIssue -and $state.issueNumber) {
+                try { Add-LEGateChangeComment -IssueNumber $state.issueNumber -Stage restoration -Outcome succeeded }
+                catch {
+                    $restoreExitCode = 2
+                    Write-LEGateJson -Path (Join-Path -Path $folder -ChildPath 'reporting-error.json') -Value @{ code = 'restoration-reporting-failed'; restored = $true }
+                }
+            }
+            return [pscustomobject]@{ restored = $true; privatePath = $folder; exitCode = $restoreExitCode }
         }
         if ($ReportIssue) {
             $issue = New-LEGateChangeIssue -IdentityHash $context.identityHash

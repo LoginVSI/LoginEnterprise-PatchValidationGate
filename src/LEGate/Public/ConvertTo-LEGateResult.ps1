@@ -66,6 +66,7 @@ function ConvertTo-LEGateResult {
         foreach ($id in $byApp.Keys) { if (-not $seen.ContainsKey($id)) { throw 'Execution missing from overview.' } }
         foreach ($evidenceEvent in @($Capture.events)) {
             $type = Get-LEGateField -Value $evidenceEvent -Selector $ResponseMap.selectors.eventType
+            if ($type -isnot [string] -or [string]::IsNullOrWhiteSpace($type)) { throw 'Malformed event type.' }
             if ($type -in @('launcherOffline', 'connectionInitializationTimeout', 'loginFailure', 'sessionFailure')) { $normalized.infrastructureFailure = $true }
         }
         $normalized.applications = @($apps.ToArray())

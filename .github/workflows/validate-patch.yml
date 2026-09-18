@@ -131,6 +131,8 @@ jobs:
           BUNDLE_NAME: validation-${{ github.run_id }}-${{ github.run_attempt }}
           LE_APPROVAL_TIME_EVIDENCE: ${{ vars.LE_APPROVAL_TIME_EVIDENCE }}
           LE_PRIVATE_ROOT: ${{ vars.LE_PRIVATE_ROOT }}
+          LE_STATE_ROOT: ${{ vars.LE_STATE_ROOT }}
+          LE_TARGET: ${{ secrets.LE_TARGET }}
         run: |
           .\scripts\Invoke-Handoff.ps1 -Stage promote -BundlePath .download/validation -ExpectedManifestHash $env:EXPECTED_HASH -BundleName $env:BUNDLE_NAME -Mode manual -PolicyFile $env:POLICY_FILE -IssueNumber ([int]$env:ISSUE_NUMBER) -OutputPath .published/handoff
       - name: Preserve promotion records and diagnostics
@@ -177,6 +179,8 @@ jobs:
           POLICY_FILE: ${{ inputs.policy_file }}
           BUNDLE_NAME: validation-${{ github.run_id }}-${{ github.run_attempt }}
           LE_APPROVAL_TIME_EVIDENCE: ${{ vars.LE_APPROVAL_TIME_EVIDENCE }}
+          LE_STATE_ROOT: ${{ vars.LE_STATE_ROOT }}
+          LE_TARGET: ${{ secrets.LE_TARGET }}
         run: |
           .\scripts\Invoke-Handoff.ps1 -Stage promote -BundlePath .download/validation -ExpectedManifestHash $env:EXPECTED_HASH -BundleName $env:BUNDLE_NAME -Mode auto -PolicyFile $env:POLICY_FILE -IssueNumber ([int]$env:ISSUE_NUMBER) -OutputPath .published/handoff
       - name: Preserve promotion records and diagnostics

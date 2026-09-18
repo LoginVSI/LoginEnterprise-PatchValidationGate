@@ -8,6 +8,7 @@ param(
     [ValidateSet('manual', 'auto')][string]$Mode,
     [string]$PolicyFile, [string]$OutputPath,
     [string]$WorkflowRunId = $env:GITHUB_RUN_ID,
+    [string]$WorkflowRunAttempt = $env:GITHUB_RUN_ATTEMPT,
     [string]$ApprovalTimeEvidencePath = $env:LE_APPROVAL_TIME_EVIDENCE,
     [string]$PromotionRecordPath, [string]$ExpectedPromotionHash, [int]$IssueNumber,
     [string]$ContinuousTestName = 'patch-gate-continuous',
@@ -27,11 +28,11 @@ try {
         $approval = $null
         if ($Mode -eq 'manual') {
             if (-not $env:LE_PRIVATE_ROOT) { throw 'Private approval capture root is required.' }
-            $time = $null
-            if ($ApprovalTimeEvidencePath) { $time = Get-Content -LiteralPath $ApprovalTimeEvidencePath -Raw | ConvertFrom-Json }
-            $approval = Get-LEGateApproval -WorkflowRunId $WorkflowRunId -TimeEvidence $time -CapturePath (Join-Path $env:LE_PRIVATE_ROOT ('approval-' + [guid]::NewGuid().ToString('N') + '.json'))
+            if ($WorkflowRunAttempt -notmatch '^[1-9][0-9]*$') { throw 'Workflow run attempt is required.' }
+            $time = Wait-LEGateApprovalEvidence -Path $ApprovalTimeEvidencePath
+            $approval = Get-LEGateApproval -WorkflowRunId $WorkflowRunId -WorkflowRunAttempt ([int]$WorkflowRunAttempt) -TimeEvidence $time -CapturePath (Join-Path $env:LE_PRIVATE_ROOT ('approval-' + [guid]::NewGuid().ToString('N') + '.json'))
         }
-        $record = Write-LEGatePromotionRecord -BundlePath $BundlePath -ExpectedManifestHash $ExpectedManifestHash -BundleName $BundleName -Policy $policy -Mode $Mode -Approval $approval -Timestamp (Get-LEGateTimestamp) -OutputPath (Join-Path -Path $OutputPath -ChildPath 'promotion-record.json')
+        $record = Write-LEGatePromotionRecord -BundlePath $BundlePath -ExpectedManifestHash $ExpectedManifestHash -BundleName $BundleName -Policy $policy -Mode $Mode -Approval $approval -Timestamp (Get-LEGateTimestamp) -OutputPath (Join-Path -Path $OutputPath -ChildPath 'promotion-record.json') -StateRoot $StateRoot -Target $Target
         Add-LEGateChangeComment -IssueNumber $IssueNumber -Stage promotion -Outcome succeeded
         if ($env:GITHUB_OUTPUT) { ('promotion_hash=' + (Get-FileHash -LiteralPath (Join-Path -Path $OutputPath -ChildPath 'promotion-record.json') -Algorithm SHA256).Hash.ToLowerInvariant()) | Out-File -LiteralPath $env:GITHUB_OUTPUT -Append -Encoding utf8 }
         $record | Out-Null

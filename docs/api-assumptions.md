@@ -16,4 +16,4 @@ The response profile is a small set of dot selectors and list modes. The example
 
 Capture tooling retains unexpected responses and errors. Without a usable profile, it saves partial evidence and exits 2. Inspect it, correct mappings from evidence, and recapture to a new directory.
 
-GitHub review history documents reviewer identity but no approval timestamp. Manual handoff blocks without matching authoritative time evidence. The runbook's local time envelope is our contract, not a GitHub API field.
+GitHub review history documents reviewer identity but no approval timestamp. [Authoritative acquisition](approval-evidence.md) remains externally blocked. Manual handoff checks repository/run/attempt/environment/reviewer and bounds file delivery, but matching fields do not establish provenance. The local time envelope is our contract, not a GitHub API field.

@@ -36,6 +36,7 @@
         'Test-LEGateEvidence',
         'Test-LEGatePolicy',
         'Test-LEGatePolicyDefinition',
+        'Wait-LEGateApprovalEvidence',
         'Wait-LEGateRun',
         'Write-LEGatePromotionRecord'
     )

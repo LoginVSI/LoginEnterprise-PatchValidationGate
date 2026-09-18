@@ -55,6 +55,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
                         $run = $state.capture.run.PSObject.Copy()
                         $run | Add-Member -NotePropertyName testRunName -NotePropertyValue 'full-flow'
                         if ($state.mode -eq 'timeout') { $run.state = 'created' }
+                        if ($state.mode -eq 'late-completion' -and $state.polls -eq 2) { $state.now = $state.now.AddMinutes(2) }
                         return $run
                     }
                     '/publicApi/v8-preview/application-test-run-overview/synthetic-run' { return $state.capture.overview }
@@ -109,6 +110,11 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
             if ($ComputerName -ne 'synthetic-target' -or $null -eq $Credential) { throw 'Target credential not propagated.' }
             [void]$calls.Add([pscustomobject]@{ method = 'REMOTE'; path = $ArgumentList[0]; body = $ArgumentList[2] })
             $state.operation = $ArgumentList[0]
+            if ($state.operation -eq 'revert') {
+                $lease = Get-ChildItem $gateArgs.StateRoot -Filter '*.json' | Select-Object -First 1
+                (Get-Content $lease.FullName -Raw | ConvertFrom-Json).stage | Should -Be 'reverting'
+                { InModuleScope LEGate -Parameters @{ root = $gateArgs.StateRoot; target = $gateArgs.Target } { Enter-LEGateTarget -StateRoot $root -Target $target } } | Should -Throw '*locked*'
+            }
             return New-Object LEGateSyntheticJob
         }
         Mock -ModuleName LEGate Wait-Job { return $Job }
@@ -162,9 +168,10 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         $publicPath = Join-Path -Path $caseRoot -ChildPath 'public'
         $published = Publish-LEGateEvidence -PrivatePath $result.privatePath -OutputPath $publicPath
         $time = [pscustomobject]@{ kind = 'github-approval-time-evidence'; repository = 'example/reference'; workflowRunId = '123'; environment = 'promotion-approval'; reviewer = 'actual-reviewer'; approvedAt = '2026-09-17T00:01:00Z'; source = 'https://github.com/example/reference/actions/runs/123' }
-        $approval = Get-LEGateApproval -WorkflowRunId '123' -TimeEvidence $time
+        $time | Add-Member -NotePropertyName workflowRunAttempt -NotePropertyValue 1
+        $approval = Get-LEGateApproval -WorkflowRunId '123' -WorkflowRunAttempt 1 -TimeEvidence $time
         $approval.approvedBy | Should -Be 'actual-reviewer'
-        $record = Write-LEGatePromotionRecord -BundlePath $publicPath -ExpectedManifestHash $published.manifestSha256 -BundleName 'synthetic-validation' -Policy $policy -Mode manual -Approval $approval -Synthetic -OutputPath (Join-Path -Path $caseRoot -ChildPath 'promotion.json')
+        $record = Write-LEGatePromotionRecord -BundlePath $publicPath -ExpectedManifestHash $published.manifestSha256 -BundleName 'synthetic-validation' -Policy $policy -Mode manual -Approval $approval -Synthetic -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -OutputPath (Join-Path -Path $caseRoot -ChildPath 'promotion.json')
         $record.provenance | Should -Be 'synthetic'
         $handoff = Invoke-LEGateContinuousHandoff -Session (Connect-LEGate) -Name 'patch-gate-continuous' -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -IdentityHash $bundle.manifest.identityHash
         Close-LEGateChangeIssue -IssueNumber 17 -Handoff $handoff
@@ -177,7 +184,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         $gateArgs.PromotionMode = 'auto'
         $result = Invoke-LEGateValidation @gateArgs
         $result.verdict | Should -Be 'PASS'
-        $record = Write-LEGatePromotionRecord -BundlePath $result.privatePath -ExpectedManifestHash $result.manifestSha256 -BundleName 'synthetic-auto' -Policy $policy -Mode auto -Timestamp '2026-09-17T00:00:00.000Z' -Synthetic -OutputPath (Join-Path $caseRoot 'auto.json')
+        $record = Write-LEGatePromotionRecord -BundlePath $result.privatePath -ExpectedManifestHash $result.manifestSha256 -BundleName 'synthetic-auto' -Policy $policy -Mode auto -Timestamp '2026-09-17T00:00:00.000Z' -Synthetic -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -OutputPath (Join-Path $caseRoot 'auto.json')
         $record.approvedBy | Should -Be 'policy'
         $policy.promotion.autoRequires += 'unknown-guard'
         { Write-LEGatePromotionRecord -BundlePath $result.privatePath -ExpectedManifestHash $result.manifestSha256 -BundleName 'synthetic-auto' -Policy $policy -Mode auto -Synthetic } | Should -Throw '*policy*'
@@ -196,7 +203,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         @($calls | Where-Object { $_.path -eq '/publicApi/v8-preview/tests/continuous-1/start' }).Count | Should -Be 0
     }
     It 'preserves INCONCLUSIVE for timeout, partial paging, API failure and adapter verification failure' {
-        foreach ($mode in @('timeout', 'partial', 'request-error', 'adapter-error')) {
+        foreach ($mode in @('timeout', 'late-completion', 'partial', 'request-error', 'adapter-error')) {
             $state.mode = $mode; $state.polls = 0
             $gateArgs.StateRoot = Join-Path -Path $caseRoot -ChildPath ('state-' + $mode)
             $result = Invoke-LEGateValidation @gateArgs
@@ -253,7 +260,8 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         $failed = Invoke-LEGateValidation @gateArgs -Revert
         $failed.exitCode | Should -Be 2
         $state.mode = 'pass'
-        $restored = Invoke-LEGateValidation @gateArgs -Revert
+        (Invoke-LEGateValidation @gateArgs -Revert).exitCode | Should -Be 2
+        $restored = Invoke-LEGateValidation @gateArgs -Revert -RecoveryConfirmed
         $restored.restored | Should -BeTrue
         (Test-LEGateEvidence -Path $result.privatePath).verdict.verdict | Should -Be 'PASS'
         @($calls | Where-Object { $_.method -eq 'REMOTE' -and $_.path -eq 'revert' }).Count | Should -Be 2
@@ -263,5 +271,64 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'INCONCLUSIVE'
         @($calls | Where-Object { $_.method -eq 'REMOTE' }).Count | Should -Be 0
         { Get-LEGateApproval -WorkflowRunId '123' } | Should -Throw '*time provenance unavailable*'
+    }
+    It 'blocks reuse and both handoffs after failed, interrupted and successful restoration' {
+        foreach ($stage in @('failed', 'interrupted', 'successful')) {
+            $gateArgs.StateRoot = Join-Path $caseRoot ('state-' + $stage)
+            $gateArgs.PromotionMode = 'auto'
+            $state.mode = 'pass'
+            $result = Invoke-LEGateValidation @gateArgs
+            $result.verdict | Should -Be 'PASS'
+            $leasePath = (Get-ChildItem $gateArgs.StateRoot -Filter '*.json').FullName
+            $lease = Get-Content $leasePath -Raw | ConvertFrom-Json
+            if ($stage -eq 'interrupted') {
+                # Model a process termination after the durable pre-mutation write.
+                $lease.stage = 'reverting'
+                $lease | ConvertTo-Json -Depth 30 | Set-Content $leasePath
+                (Invoke-LEGateValidation @gateArgs -Revert).exitCode | Should -Be 2
+            }
+            else {
+                if ($stage -eq 'failed') { $state.mode = 'restore-error' }
+                $restored = Invoke-LEGateValidation @gateArgs -Revert
+                if ($stage -eq 'failed') {
+                    $restored.exitCode | Should -Be 2
+                    (Get-Content $leasePath -Raw | ConvertFrom-Json).stage | Should -Be 'recovery-required'
+                }
+                else { $restored.restored | Should -BeTrue }
+            }
+            $calls.Clear()
+            (Invoke-LEGateValidation @gateArgs -Resume).verdict | Should -Be 'INCONCLUSIVE'
+            $destination = Join-Path $caseRoot ($stage + '-promotion.json')
+            { Write-LEGatePromotionRecord -BundlePath $result.privatePath -ExpectedManifestHash $result.manifestSha256 -BundleName 'synthetic' -Policy $policy -Mode auto -Timestamp '2026-09-17T00:00:00Z' -Synthetic -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -OutputPath $destination } | Should -Throw '*restored, changed or requires recovery*'
+            Test-Path $destination | Should -BeFalse
+            { Invoke-LEGateContinuousHandoff -Session (Connect-LEGate) -Name 'patch-gate-continuous' -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -IdentityHash $lease.identityHash } | Should -Throw '*restored, changed or requires recovery*'
+            @($calls | Where-Object { $_.method -eq 'PUT' -or $_.method -eq 'REMOTE' }).Count | Should -Be 0
+            (Test-LEGateEvidence -Path $result.privatePath).verdict.verdict | Should -Be 'PASS'
+        }
+    }
+    It 'records successful restoration before optional reporting fails' {
+        $result = Invoke-LEGateValidation @gateArgs
+        Mock -ModuleName LEGate Add-LEGateChangeComment { throw 'Synthetic reporting failure' } -ParameterFilter { $Stage -eq 'restoration' }
+        $restored = Invoke-LEGateValidation @gateArgs -Revert
+        $restored.restored | Should -BeTrue
+        $restored.exitCode | Should -Be 2
+        (Get-Content (Get-ChildItem $gateArgs.StateRoot -Filter '*.json').FullName -Raw | ConvertFrom-Json).stage | Should -Be 'reverted'
+        (Get-Content (Join-Path $restored.privatePath 'reporting-error.json') -Raw | ConvertFrom-Json).restored | Should -BeTrue
+        (Invoke-LEGateValidation @gateArgs -Resume).verdict | Should -Be 'INCONCLUSIVE'
+        (Test-LEGateEvidence -Path $result.privatePath).verdict.verdict | Should -Be 'PASS'
+    }
+    It 'holds the target lock through promotion recording and releases it for continuous handoff' {
+        $gateArgs.PromotionMode = 'auto'
+        $result = Invoke-LEGateValidation @gateArgs
+        $destination = Join-Path $caseRoot 'locked-promotion.json'
+        Mock -ModuleName LEGate Write-LEGateJson {
+            { InModuleScope LEGate -Parameters @{ root = $gateArgs.StateRoot; target = $gateArgs.Target } { Enter-LEGateTarget -StateRoot $root -Target $target } } | Should -Throw '*locked*'
+            [IO.File]::WriteAllText($Path, (ConvertTo-Json $Value -Depth 30))
+        } -ParameterFilter { $Path -eq $destination }
+        $record = Write-LEGatePromotionRecord -BundlePath $result.privatePath -ExpectedManifestHash $result.manifestSha256 -BundleName 'synthetic' -Policy $policy -Mode auto -Timestamp '2026-09-17T00:00:00Z' -Synthetic -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -OutputPath $destination
+        $record.verdict | Should -Be 'PASS'
+        Should -Invoke -ModuleName LEGate Write-LEGateJson -Times 1 -Exactly -ParameterFilter { $Path -eq $destination }
+        $identity = (Test-LEGateEvidence -Path $result.privatePath).manifest.identityHash
+        (Invoke-LEGateContinuousHandoff -Session (Connect-LEGate) -Name 'patch-gate-continuous' -StateRoot $gateArgs.StateRoot -Target $gateArgs.Target -IdentityHash $identity).succeeded | Should -BeTrue
     }
 }

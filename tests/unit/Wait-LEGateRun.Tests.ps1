@@ -8,15 +8,18 @@ Describe 'Wait-LEGateRun' {
         $sleeps = [System.Collections.ArrayList]::new()
 
         Mock -ModuleName LEGate Get-LEGateUtcNow {
-            $value = $clock.now
-            $clock.now = $clock.now.AddMinutes($clock.stepMinutes)
-            $value
+            $clock.now
         }
-        Mock -ModuleName LEGate Start-Sleep { [void]$sleeps.Add($Seconds) }
+        Mock -ModuleName LEGate Start-Sleep {
+            $duration = $Seconds + $Milliseconds / 1000
+            [void]$sleeps.Add($duration)
+            $clock.now = $clock.now.AddSeconds($duration)
+        }
         Mock -ModuleName LEGate Invoke-RestMethod {
             if ($Uri -notlike '*/test-runs/run-1') { throw "Unexpected call: $Method $Uri" }
             $item = $state.sequence[[Math]::Min($state.index, $state.sequence.Count - 1)]
             $state.index++
+            $clock.now = $clock.now.AddMinutes($clock.stepMinutes)
             [pscustomobject]@{
                 id                = 'run-1'
                 testRunName       = 'CHG-100'
@@ -92,5 +95,24 @@ Describe 'Wait-LEGateRun' {
         Wait-LEGateRun -Session $session -TestRunId 'run-1' -ChangeId 'CHG-101' -MaxWaitMinutes 1 -EvidenceRoot $root 6>$null 3>$null | Out-Null
         $saved = Get-Content -Path (Join-Path -Path $root -ChildPath 'CHG-101\run.json') -Raw | ConvertFrom-Json
         $saved.state | Should -Be 'testRunEnded'
+    }
+    It 'rejects late completion and preserves the response bytes as JSON evidence' {
+        $state.sequence = @(@{ state = 'completed'; result = 'successful' })
+        $clock.stepMinutes = 2
+        $root = Join-Path $TestDrive 'late'
+        $run = Wait-LEGateRun -Session $session -TestRunId 'run-1' -ChangeId 'late' -MaxWaitMinutes 1 -EvidenceRoot $root
+        $run.timedOut | Should -BeTrue
+        $run.waitedSeconds | Should -Be 120
+        $saved = Get-Content (Join-Path $root 'late/run.json') -Raw | ConvertFrom-Json
+        $saved.state | Should -Be 'completed'
+        $saved.PSObject.Properties.Name | Should -Not -Contain 'timedOut'
+        Should -Invoke -ModuleName LEGate Invoke-RestMethod -Times 1 -Exactly -ParameterFilter { $TimeoutSec -le 60 -and $TimeoutSec -gt 0 }
+    }
+    It 'bounds the sleep by remaining time and makes no request at the deadline' {
+        $state.sequence = @(@{ state = 'created'; result = $null })
+        $run = Wait-LEGateRun -Session $session -TestRunId 'run-1' -ChangeId 'bounded' -MaxWaitMinutes 1 -PollIntervalSeconds 120 -EvidenceRoot $TestDrive
+        $run.timedOut | Should -BeTrue
+        $sleeps | Should -Be @(60)
+        Should -Invoke -ModuleName LEGate Invoke-RestMethod -Times 1 -Exactly
     }
 }

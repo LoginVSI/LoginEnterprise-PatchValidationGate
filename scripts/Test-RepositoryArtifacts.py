@@ -26,6 +26,10 @@ for mode in ("manual", "auto"):
     condition = live["jobs"]["promote-" + mode]["if"]
     assert "needs.validate.result == 'success'" in condition
     assert "needs.validate.outputs.verdict == 'PASS'" in condition
+    promotion_steps = live["jobs"]["promote-" + mode]["steps"]
+    promotion = next(step for step in promotion_steps if "Invoke-Handoff.ps1" in step.get("run", ""))
+    assert promotion["env"]["LE_STATE_ROOT"] == "${{ vars.LE_STATE_ROOT }}"
+    assert promotion["env"]["LE_TARGET"] == "${{ secrets.LE_TARGET }}"
 continuous = live["jobs"]["continuous-testing"]["if"]
 assert "!cancelled()" in continuous and "needs.validate.result == 'success'" in continuous
 assert "promote-manual.result == 'success'" in continuous

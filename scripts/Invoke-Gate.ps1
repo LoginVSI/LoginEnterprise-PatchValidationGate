@@ -47,7 +47,7 @@ try {
     if ($Credential) { $requestArgs.Credential = $Credential }
     $result = Invoke-LEGateValidation @requestArgs
     if ($Revert) {
-        if ($result.restored) { Write-Output 'Restoration verified; private record preserved.'; exit 0 }
+        if ($result.restored) { Write-Output 'Restoration verified; private record preserved. Check exit code for reporting failure.'; exit $result.exitCode }
         exit 2
     }
     if ($PublicationPath) {

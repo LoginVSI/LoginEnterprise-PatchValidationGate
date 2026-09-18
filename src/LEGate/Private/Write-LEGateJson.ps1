@@ -8,5 +8,5 @@ function Write-LEGateJson {
     [IO.Directory]::CreateDirectory($parent) | Out-Null
     $temp = $Path + '.' + [guid]::NewGuid().ToString('N') + '.tmp'
     [IO.File]::WriteAllText($temp, (ConvertTo-Json -InputObject $Value -Depth 80), (New-Object Text.UTF8Encoding($false)))
-    Move-Item -LiteralPath $temp -Destination $Path -Force
+    Move-Item -LiteralPath $temp -Destination $Path -Force -ErrorAction Stop
 }
