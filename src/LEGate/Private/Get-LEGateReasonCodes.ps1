@@ -10,7 +10,9 @@ function Get-LEGateReasonCodes {
     #>
     [CmdletBinding()]
     [OutputType([string[]])]
-    param()
+    param([switch]$IncludeFailures)
+
+    if ($IncludeFailures) { return @('application-failed', 'application-not-executed') }
 
     return @(
         'test-not-found',

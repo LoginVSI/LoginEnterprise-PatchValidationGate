@@ -1,0 +1,51 @@
+{
+  "manifestVersion": "1",
+  "changeId": "synthetic-fail",
+  "generatedAt": "2026-09-17T00:00:00.000Z",
+  "appliance": {
+    "apiVersion": "v8-preview",
+    "currentVersion": null
+  },
+  "test": {
+    "id": "synthetic-test",
+    "name": "patch-gate-app"
+  },
+  "testRun": {
+    "state": "completed",
+    "result": "successful",
+    "testRunName": "synthetic-fail",
+    "id": "synthetic-run"
+  },
+  "policy": {
+    "name": "demo-functional",
+    "hash": "sha256:e09d640a3ccfbda659eb12b958221d8fb03f7b4275df3aabbd2816de56c72597",
+    "path": "tests/synthetic/policy.json"
+  },
+  "adapter": null,
+  "files": [
+    {
+      "path": "normalized.json",
+      "kind": "report",
+      "sha256": "3e46c3d5d3b38e7f4321e54c3d4e8f01fcab90fa50cae08c2f16072a25346253",
+      "bytes": 564
+    },
+    {
+      "path": "summary.md",
+      "kind": "summary",
+      "sha256": "82ee577274d55b237254a378029d828054bcb834359a6726f0266f6c7148f9b0",
+      "bytes": 214
+    },
+    {
+      "path": "verdict.json",
+      "kind": "verdict",
+      "sha256": "d5472775329b0c92db1efd7dcb43aa437f2ebf60f6f21788b291e620f5edfc01",
+      "bytes": 714
+    }
+  ],
+  "provenance": "synthetic",
+  "sourceCommit": null,
+  "changeManifestHash": null,
+  "identityHash": null,
+  "completeness": true,
+  "publication": null
+}

@@ -6,11 +6,38 @@
     Description       = 'Thin PowerShell wrapper over the Login Enterprise Public API, used as an evidence gate for patch promotion.'
     PowerShellVersion = '5.1'
     FunctionsToExport = @(
+        'Add-LEGateChangeComment',
+        'Close-LEGateChangeIssue',
         'Connect-LEGate',
+        'ConvertTo-LEGateBoolean',
+        'ConvertTo-LEGateResult',
+        'Export-LEGateEvidence',
+        'Export-LEGateRunResult',
+        'Get-LEGateApproval',
+        'Get-LEGateRunAppExecution',
+        'Get-LEGateRunEvent',
+        'Get-LEGateRunMeasurement',
+        'Get-LEGateRunOverview',
+        'Get-LEGateRunScreenshot',
+        'Get-LEGateRunSession',
+        'Get-LEGateTimestamp',
         'Get-LEGateVersion',
+        'Invoke-LEGateChangeAdapter',
+        'Invoke-LEGateContinuousHandoff',
+        'Invoke-LEGateValidation',
+        'New-LEGateChangeIssue',
+        'Publish-LEGateEvidence',
+        'Read-LEGatePolicy',
+        'Resolve-LEGateContinuousTest',
         'Resolve-LEGateTest',
+        'Start-LEGateContinuousTest',
         'Start-LEGateRun',
-        'Wait-LEGateRun'
+        'Test-LEGateChangeManifest',
+        'Test-LEGateEvidence',
+        'Test-LEGatePolicy',
+        'Test-LEGatePolicyDefinition',
+        'Wait-LEGateRun',
+        'Write-LEGatePromotionRecord'
     )
     CmdletsToExport   = @()
     VariablesToExport = @()

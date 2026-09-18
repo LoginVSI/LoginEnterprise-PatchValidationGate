@@ -7,7 +7,7 @@ $script:hasAppliance = -not ([string]::IsNullOrWhiteSpace($env:LE_BASE_URL) -or 
 Describe 'Appliance' -Skip:(-not $script:hasAppliance) {
     BeforeAll {
         Import-Module -Name (Join-Path -Path $PSScriptRoot -ChildPath '..\..\src\LEGate\LEGate.psd1') -Force
-        $skipCert = $env:LE_SKIP_CERT_CHECK -eq '1'
+        $skipCert = ConvertTo-LEGateBoolean -Value $env:LE_SKIP_CERT_CHECK
         $session = Connect-LEGate -SkipCertificateCheck:$skipCert 6>$null 3>$null
     }
 

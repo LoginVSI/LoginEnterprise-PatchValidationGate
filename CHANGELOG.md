@@ -20,3 +20,12 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 [Unreleased]: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/releases/tag/v0.1.0
+
+## Part 2 offline implementation (unreleased)
+
+- Added strict results collection, normalization, pure functional policy, byte-verified evidence and allowlisted publication.
+- Added pinned MSI update, reversible executable break and noop adapters; explicit credentials, durable identity/target ownership, resume and restoration.
+- Added issue reporting, approval provenance checks, simulated promotion, continuous handoff and dispatch-only pinned Actions jobs with artifact transfer.
+- Added synthetic evaluator examples, external-boundary full-flow tests, private capture tooling, one read-only explainer skill and reproducible runbooks.
+- Removed the PS5.1 process-wide certificate bypass. Untracked generated NUnit output without rewriting history. Fixed ignore entries.
+- Added contract extensions documented in contracts.md. Live API acceptance remains pending; no release/tag is created.

@@ -1,0 +1,15 @@
+{
+  "verdict": "INCONCLUSIVE",
+  "reasonCodes": [
+    "results-incomplete"
+  ],
+  "changeId": "synthetic-inconclusive",
+  "testName": "patch-gate-app",
+  "testRunId": "synthetic-run",
+  "policyName": "demo-functional",
+  "policyHash": "sha256:e09d640a3ccfbda659eb12b958221d8fb03f7b4275df3aabbd2816de56c72597",
+  "promotionMode": "manual",
+  "evaluatedAt": "2026-09-17T00:00:00.000Z",
+  "summary": "Functional validation is inconclusive; inspect private diagnostics.",
+  "applications": []
+}

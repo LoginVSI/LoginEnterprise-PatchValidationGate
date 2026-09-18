@@ -4,4 +4,9 @@ evidence/
 .env
 .vscode/
 *.log
-Thumbs.dbtests/results/
+Thumbs.db
+tests/results/
+.private/
+.published/
+.state/
+.download/

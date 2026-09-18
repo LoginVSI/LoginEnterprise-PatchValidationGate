@@ -6,8 +6,8 @@
     appliance version. That alone is a useful check of URL, token, and API version.
 
     With -TestName and -ChangeId it goes further: resolves the application test by
-    exact name, starts a run tagged with the change id (or picks up the existing run
-    for that change id), waits for it to complete, and prints state, result, and
+    exact name, starts a fresh run tagged with the change id (refusing an existing
+    named run), waits for it to complete, and prints state, result, and
     appFailureResults. The raw run is written to evidence/{changeId}/run.json.
 
     Exit codes:
@@ -67,6 +67,7 @@ try {
     Write-Output ('LEGate smoke check  {0}' -f [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ss.fffZ'))
     Write-Output ('PowerShell {0}' -f $PSVersionTable.PSVersion)
 
+    if (-not $PSBoundParameters.ContainsKey('SkipCertificateCheck')) { $SkipCertificateCheck = ConvertTo-LEGateBoolean -Value $env:LE_SKIP_CERT_CHECK }
     $session = Connect-LEGate -ApiVersion $ApiVersion -SkipCertificateCheck:$SkipCertificateCheck
     Write-Output ('Base URL     : {0}' -f $session.BaseUrl)
     Write-Output ('API version  : {0}' -f $session.ApiVersion)

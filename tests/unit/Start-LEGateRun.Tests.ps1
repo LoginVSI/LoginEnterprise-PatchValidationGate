@@ -47,13 +47,12 @@ Describe 'Start-LEGateRun' {
         $body.comment | Should -Be 'hello'
     }
 
-    It 'returns the existing run for the change id and does not start a second one' {
+    It 'refuses name-only reuse and does not start a second run' {
         $state.existingRuns = @(
             [pscustomobject]@{ id = 'run-other'; testRunName = 'CHG-099'; state = 'completed' },
             [pscustomobject]@{ id = 'run-existing'; testRunName = 'CHG-100'; state = 'created' }
         )
-        $runId = Start-LEGateRun -Session $session -TestId 'test-1' -ChangeId 'CHG-100' 6>$null
-        $runId | Should -Be 'run-existing'
+        { Start-LEGateRun -Session $session -TestId 'test-1' -ChangeId 'CHG-100' 6>$null } | Should -Throw '*durable identity*'
         @($calls | Where-Object { $_.Method -eq 'PUT' }).Count | Should -Be 0
     }
 

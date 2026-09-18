@@ -1,0 +1,40 @@
+{
+  "profileVersion": "1",
+  "provenance": "synthetic",
+  "confirmedFrom": "Synthetic contract example only. Replace selectors after private capture review.",
+  "lists": {
+    "sessions": {
+      "envelope": "envelope",
+      "arrayTerminationConfirmed": false
+    },
+    "executions": {
+      "envelope": "envelope",
+      "arrayTerminationConfirmed": false
+    },
+    "events": {
+      "envelope": "envelope",
+      "arrayTerminationConfirmed": false
+    },
+    "measurements": {
+      "envelope": "envelope",
+      "arrayTerminationConfirmed": false
+    },
+    "screenshots": {
+      "envelope": "envelope",
+      "arrayTerminationConfirmed": false
+    }
+  },
+  "selectors": {
+    "overviewApplications": "applications",
+    "overviewLogin": "platform.loginSuccessful",
+    "overviewAppId": "applicationId",
+    "sessionId": "id",
+    "sessionRunId": "testRunId",
+    "executionId": "id",
+    "executionAppId": "applicationId",
+    "executionSessionId": "userSessionId",
+    "executionRunId": "testRunId",
+    "eventType": "type",
+    "screenshotId": "id"
+  }
+}

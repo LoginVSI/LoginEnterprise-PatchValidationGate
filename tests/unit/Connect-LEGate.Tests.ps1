@@ -57,6 +57,12 @@ Describe 'Connect-LEGate' {
     }
 
     It 'records the skip certificate flag on the session' {
+        if ($PSVersionTable.PSEdition -eq 'Desktop') {
+            $callback = [System.Net.ServicePointManager]::ServerCertificateValidationCallback
+            { Connect-LEGate -BaseUrl 'https://appliance.example.test' -ApiToken 'x' -SkipCertificateCheck 6>$null } | Should -Throw '*requires PowerShell 7*'
+            [System.Net.ServicePointManager]::ServerCertificateValidationCallback | Should -Be $callback
+            return
+        }
         $session = Connect-LEGate -BaseUrl 'https://appliance.example.test' -ApiToken 'x' -SkipCertificateCheck 6>$null 3>$null
         $session.SkipCertificateCheck | Should -BeTrue
     }

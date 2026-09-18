@@ -27,13 +27,13 @@ Windows PowerShell 5.1 is the floor. No ternary operator, no null-coalescing, no
 
 One function per file. The file name is the function name. Public functions live in `src/LEGate/Public/` and are named `Verb-LEGate*` with an approved verb. Private helpers live in `src/LEGate/Private/` and are not exported. Adding a public function means adding it to `FunctionsToExport` in the manifest as well; the module test fails otherwise.
 
-All HTTP goes through `Invoke-LEGateRequest`. Do not call `Invoke-RestMethod` from anywhere else. All logging goes through `Write-LEGateLog`. Do not call `Write-Host` or `Write-Verbose` directly. All timestamps come from `Get-LEGateUtcNow` and `ConvertTo-LEGateTimestamp`.
+Appliance HTTP uses `Invoke-LEGateRequest`; GitHub HTTP uses the separate fixed-origin helper. Installer download is a separate normal-TLS boundary. All logging goes through `Write-LEGateLog`. Do not call `Write-Host` or `Write-Verbose` directly. All timestamps come from `Get-LEGateUtcNow` and `ConvertTo-LEGateTimestamp`.
 
 Comment-based help on every function: synopsis, description, parameters. Write it the way you would explain the function to a colleague.
 
 ## Tests
 
-Every public function has a unit test file in `tests/unit/` named `{FunctionName}.Tests.ps1`. Private helpers with any logic get one too. Unit tests mock `Invoke-RestMethod` and never touch the network; they run on a hosted CI runner with no appliance.
+Tests in `tests/unit/` cover public behavior and failure boundaries, including full flows with only external boundaries replaced. Unit tests mock `Invoke-RestMethod` and never touch the network; they run on a hosted CI runner with no appliance.
 
 A change to behaviour is not done until a test covers it. A bug fix starts with a failing test.
 
@@ -48,7 +48,7 @@ Run everything before you push:
 
 ## Fixtures
 
-Fixtures in `tests/fixtures/` are real appliance responses, saved as JSON and sanitized. The naming and sanitization rules are in `tests/fixtures/README.md`. In short: no hostnames, no account names, no tokens; ids are fine; keep the shape exactly as the appliance sent it.
+No genuine fixtures are committed yet. `tests/fixtures/` is reserved for reviewed real captures; `tests/synthetic/` holds labeled synthetic inputs. The naming and sanitization rules are in `tests/fixtures/README.md`. In short: no hostnames, no account names, no tokens; review identifying IDs too; keep the shape exactly as the appliance sent it.
 
 To capture one, run the call through the module with `LE_BASE_URL` and `LE_API_TOKEN` set, save the raw object with `ConvertTo-Json -Depth 20`, sanitize by hand, and read the entire file one more time before you commit it. Reviewers should read fixture diffs line by line for the same reason.
 

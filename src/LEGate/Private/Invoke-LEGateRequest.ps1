@@ -38,6 +38,8 @@ function Invoke-LEGateRequest {
 
         [object]$Body,
 
+        [string]$OutFile,
+
         [ValidateRange(1, 10)]
         [int]$MaxAttempts = 3,
 
@@ -75,6 +77,7 @@ function Invoke-LEGateRequest {
         Headers     = $headers
         TimeoutSec  = $TimeoutSeconds
         ErrorAction = 'Stop'
+        MaximumRedirection = 0
     }
     if ($null -ne $Body) {
         $splat['ContentType'] = 'application/json'
@@ -89,12 +92,16 @@ function Invoke-LEGateRequest {
         $splat['SkipCertificateCheck'] = $true
     }
 
+    if ($OutFile) { $splat['OutFile'] = $OutFile; $headers.Accept = 'application/octet-stream' }
     $lastError = $null
     for ($attempt = 1; $attempt -le $attempts; $attempt++) {
         Write-LEGateLog -Level Debug -Message 'API request' -Fields @{ method = $Method; uri = $uri; attempt = $attempt; maxAttempts = $attempts }
         try {
             $response = Invoke-RestMethod @splat
-            return $response
+            if ($Session.TraceRoot) {
+                Write-LEGateJson -Path (Join-Path -Path $Session.TraceRoot -ChildPath ([guid]::NewGuid().ToString('N') + '.json')) -Value @{ method = $Method; path = $Path; query = $Query; requestBody = $Body; response = $response; binary = [bool]$OutFile; capturedAt = ConvertTo-LEGateTimestamp -Value (Get-LEGateUtcNow) }
+            }
+            return , $response
         }
         catch {
             $lastError = $_
@@ -172,8 +179,8 @@ function Invoke-LEGateRequest {
 
     $failure = New-Object System.Exception($message)
     $failure.Data['LEGate.StatusCode'] = $statusCode
-    $failure.Data['LEGate.Title'] = $problemTitle
-    $failure.Data['LEGate.Detail'] = $problemDetail
+    $failure.Data['LEGate.Title'] = Hide-LEGateSecret -Text $problemTitle
+    $failure.Data['LEGate.Detail'] = Hide-LEGateSecret -Text $problemDetail
     $failure.Data['LEGate.Method'] = $Method
     $failure.Data['LEGate.Path'] = $Path
     throw $failure

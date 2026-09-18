@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1",
+  "runId": "synthetic-run",
+  "state": "completed",
+  "result": "successful",
+  "complete": true,
+  "integrityValid": true,
+  "timedOut": false,
+  "infrastructureFailure": false,
+  "loginSuccessful": true,
+  "totalExecutions": 2,
+  "applications": [
+    {
+      "id": "notepad",
+      "successful": true,
+      "executions": 1,
+      "failures": 0
+    },
+    {
+      "id": "demo-app",
+      "successful": true,
+      "executions": 1,
+      "failures": 0
+    }
+  ],
+  "errors": [],
+  "provenance": "synthetic"
+}

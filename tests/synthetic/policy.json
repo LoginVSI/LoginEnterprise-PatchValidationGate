@@ -1,0 +1,37 @@
+{
+  "policyVersion": "1",
+  "name": "demo-functional",
+  "test": {
+    "name": "patch-gate-app"
+  },
+  "execution": {
+    "maxWaitMinutes": 45,
+    "pollIntervalSeconds": 30
+  },
+  "functional": {
+    "requiredApplications": [
+      "notepad",
+      "demo-app"
+    ],
+    "allowStepRetries": 0,
+    "failOnAnyApplicationFailure": true
+  },
+  "performance": {
+    "enabled": false
+  },
+  "promotion": {
+    "defaultMode": "manual",
+    "autoRequires": [
+      "verdict:PASS",
+      "results-complete"
+    ]
+  },
+  "inconclusiveWhen": [
+    "test-not-found",
+    "preflight-failed",
+    "run-timeout",
+    "launcher-or-connection-error",
+    "results-incomplete",
+    "policy-invalid"
+  ]
+}

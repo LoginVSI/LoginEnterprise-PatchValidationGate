@@ -17,10 +17,10 @@ Reference implementation: Login Enterprise as an evidence gate for patch promoti
 ## Layout
 
 - `src/LEGate/LEGate.psm1` dot-sources `Private/*.ps1` then `Public/*.ps1` and exports only Public. One function per file, `Verb-LEGate*` naming for public functions.
-- All HTTP through `Private/Invoke-LEGateRequest.ps1`. All logging through `Private/Write-LEGateLog.ps1`. All timestamps UTC ISO 8601 via `Private/ConvertTo-LEGateTimestamp.ps1`. Reason codes live only in `Private/Get-LEGateReasonCodes.ps1`.
-- `policies/` holds policy files and the schema. `docs/` holds the human docs. `adapters/change/` is for later.
-- Tests go in `tests/unit` (mocked HTTP) and `tests/integration` (real appliance, skipped without env vars) as Pester 5. Fixtures in `tests/fixtures/`, sanitized.
+- Appliance HTTP through `Private/Invoke-LEGateRequest.ps1`; GitHub HTTP through its separate fixed-origin helper. All logging through `Private/Write-LEGateLog.ps1`. All timestamps UTC ISO 8601 via `Private/ConvertTo-LEGateTimestamp.ps1`. Reason codes live only in `Private/Get-LEGateReasonCodes.ps1`.
+- `policies/` holds policy files and the schema. `docs/` holds the human docs. `adapters/change/` contains the scoped lab adapters.
+- Tests go in `tests/unit` (mocked HTTP) and `tests/integration` (real appliance, skipped without env vars) as Pester 5. Synthetic fixtures are in `tests/synthetic/`; genuine captures remain private until reviewed.
 
 ## Approved Part 2 scope (2026-09-17)
 
-The implemented foundation is auth, the version call, exact application-test resolution, start/resume, polling, and raw run output. Approved Part 2 work extends it with fixture-backed results retrieval, a pure evaluator, contract-compliant evidence, scoped lab change adapters, GitHub issue/approval handoff, simulated promotion, and starting a pre-existing continuous test. Read HANDOFF.md for current gaps, prerequisites, and the next checkpoint; Joshua supplies execution prompts separately, and each task prompt determines the work authorized for that turn. Production deployment integrations, Windows cumulative updates, baseline/performance policy, and AI remain deferred. The technical rules above still apply; adapters/change is now within the approved Part 2 scope.
+The offline implementation includes results retrieval, a pure evaluator, contract-compliant evidence, scoped lab change adapters, GitHub issue/approval handoff, simulated promotion, and starting an existing continuous test. Read HANDOFF.md for live prerequisites and the next checkpoint. Joshua supplies execution prompts separately; each task determines its authorized actions. Production deployment integrations, Windows cumulative updates and baseline/performance policy remain deferred. The read-only evidence-explainer skill is included. Synthetic fixtures support implementation and tests; live acceptance is separate. The technical rules above still apply.

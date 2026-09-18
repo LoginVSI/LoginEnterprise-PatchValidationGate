@@ -1,0 +1,60 @@
+{
+  "provenance": "synthetic",
+  "complete": true,
+  "run": {
+    "id": "synthetic-run",
+    "state": "completed",
+    "result": "successful",
+    "appFailureResults": {
+      "successCount": 1,
+      "totalCount": 2
+    }
+  },
+  "overview": {
+    "platform": {
+      "loginSuccessful": true
+    },
+    "applications": [
+      {
+        "applicationId": "notepad",
+        "appExecutionSuccessful": true
+      },
+      {
+        "applicationId": "demo-app",
+        "appExecutionSuccessful": false
+      }
+    ]
+  },
+  "sessions": [
+    {
+      "id": "session-1",
+      "testRunId": "synthetic-run",
+      "loginState": "succeeded"
+    }
+  ],
+  "executions": [
+    {
+      "id": "execution-1",
+      "testRunId": "synthetic-run",
+      "userSessionId": "session-1",
+      "applicationId": "notepad",
+      "state": "ended"
+    },
+    {
+      "id": "execution-2",
+      "testRunId": "synthetic-run",
+      "userSessionId": "session-1",
+      "applicationId": "demo-app",
+      "state": "endedWithErrors"
+    }
+  ],
+  "events": [
+    {
+      "type": "applicationFailure",
+      "appExecutionId": "execution-2"
+    }
+  ],
+  "measurements": [],
+  "screenshots": [],
+  "errors": []
+}

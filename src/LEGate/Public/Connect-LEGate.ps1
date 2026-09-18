@@ -11,8 +11,7 @@ function Connect-LEGate {
         module's redaction list, so it never shows up in log lines or error text.
 
         -SkipCertificateCheck is for lab appliances with self-signed certificates. On
-        Windows PowerShell 5.1 it installs a process-wide certificate validation
-        callback, because Invoke-RestMethod has no -SkipCertificateCheck switch there.
+        Windows PowerShell 5.1 certificate skipping is rejected; install proper trust.
         On PowerShell 7 the switch is passed through per request instead.
     .PARAMETER BaseUrl
         Appliance base URL, for example https://appliance.example.test. Defaults to LE_BASE_URL.
@@ -40,6 +39,11 @@ function Connect-LEGate {
 
     if ([string]::IsNullOrWhiteSpace($BaseUrl)) { $BaseUrl = $env:LE_BASE_URL }
     if ([string]::IsNullOrWhiteSpace($ApiToken)) { $ApiToken = $env:LE_API_TOKEN }
+    if (-not $PSBoundParameters.ContainsKey('ApiVersion') -and $env:LE_API_VERSION) {
+        if ($env:LE_API_VERSION -notmatch '^[A-Za-z0-9.-]+$') { throw 'Invalid API version.' }
+        $ApiVersion = $env:LE_API_VERSION
+    }
+    if (-not $PSBoundParameters.ContainsKey('SkipCertificateCheck')) { $SkipCertificateCheck = ConvertTo-LEGateBoolean -Value $env:LE_SKIP_CERT_CHECK }
 
     if ([string]::IsNullOrWhiteSpace($BaseUrl)) {
         throw 'No base URL. Set LE_BASE_URL or pass -BaseUrl.'
@@ -50,7 +54,7 @@ function Connect-LEGate {
 
     $BaseUrl = $BaseUrl.Trim().TrimEnd('/')
     $parsed = $null
-    if (-not [Uri]::TryCreate($BaseUrl, [UriKind]::Absolute, [ref]$parsed) -or $parsed.Scheme -notin @('http', 'https')) {
+    if (-not [Uri]::TryCreate($BaseUrl, [UriKind]::Absolute, [ref]$parsed) -or $parsed.Scheme -ne 'https' -or $parsed.UserInfo -or $parsed.AbsolutePath -ne '/' -or $parsed.Query -or $parsed.Fragment) {
         throw ('Base URL is not an absolute http or https URL: {0}' -f $BaseUrl)
     }
 
@@ -68,8 +72,7 @@ function Connect-LEGate {
 
     $nativeSkip = (Get-Command Invoke-RestMethod).Parameters.ContainsKey('SkipCertificateCheck')
     if ($SkipCertificateCheck.IsPresent -and -not $nativeSkip) {
-        [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { param($senderObject, $certificate, $chain, $sslPolicyErrors) $true }
-        Write-LEGateLog -Level Warn -Message 'Certificate validation disabled for this process'
+        throw 'Lab certificate skipping requires PowerShell 7. On Windows PowerShell 5.1 install proper appliance certificate trust.'
     }
 
     $session = [PSCustomObject]@{

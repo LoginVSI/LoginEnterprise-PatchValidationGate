@@ -1,12 +1,9 @@
 function Start-LEGateRun {
     <#
     .SYNOPSIS
-        Starts an application test run for a change, or returns the run that already exists.
+        Starts a fresh application run; refuses an existing named run.
     .DESCRIPTION
-        Idempotent by change id. The function first lists the test's runs through
-        GET /tests/{testId}/test-runs (newest first) and looks for one whose
-        testRunName equals -ChangeId. If it finds one, that run id is returned and
-        nothing is started.
+        A matching run name is refused. Use Invoke-Gate -Resume with durable identity to resume safely.
 
         Otherwise it calls PUT /tests/{testId}/start with testRunName set to the change
         id and comment set to -Comment. The comment defaults to the policy hash when
@@ -48,14 +45,14 @@ function Start-LEGateRun {
         [string]$PolicyPath
     )
 
+    Assert-LEGateIdentifier -Value $TestId
+    Assert-LEGateIdentifier -Value $ChangeId
     $runsPath = '/tests/{0}/test-runs' -f $TestId
     $existing = @(Get-LEGateAllPages -Session $Session -Path $runsPath -Query @{ count = 20; orderBy = 'created'; direction = 'desc' })
     $match = @($existing | Where-Object { [string]::Equals([string]$_.testRunName, $ChangeId, [System.StringComparison]::Ordinal) })
 
     if ($match.Count -gt 0) {
-        $run = $match[0]
-        Write-LEGateLog -Level Info -Message 'Existing run found for change, not starting a new one' -Fields @{ changeId = $ChangeId; testId = $TestId; testRunId = $run.id; state = $run.state }
-        return [string]$run.id
+        throw 'A named run already exists. Use Invoke-Gate -Resume with the original durable identity, or a fresh change ID.'
     }
 
     if ([string]::IsNullOrWhiteSpace($Comment)) {

@@ -6,7 +6,7 @@
     -Integration the tests/integration suite runs as well; it skips itself when
     LE_BASE_URL and LE_API_TOKEN are not set.
 
-    Results are written as NUnit XML to tests/results so CI can publish them.
+    Private NUnit XML and a publication-safe count summary go to tests/results.
     The script exits non-zero when any test fails.
 .PARAMETER Integration
     Also run tests/integration.
@@ -28,6 +28,7 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+$env:LEGATE_TEST_MODE = 'true'
 
 Import-Module -Name Pester -MinimumVersion 5.0.0 -ErrorAction Stop
 
@@ -54,6 +55,10 @@ if ($null -eq $result) {
     Write-Error 'Pester returned no result.'
     exit 1
 }
+
+$summary = @{ shellMajorVersion = $PSVersionTable.PSVersion.Major; passed = $result.PassedCount; failed = $result.FailedCount; skipped = $result.SkippedCount; provenance = 'offline-synthetic-and-mocked' }
+if ($Integration -or $IntegrationOnly) { $summary.provenance = 'integration-requested-check-skips' }
+$summary | ConvertTo-Json | Set-Content -LiteralPath (Join-Path -Path $resultsFolder -ChildPath ('summary-' + $PSVersionTable.PSVersion.Major + '.json')) -Encoding utf8
 
 if ($result.FailedCount -gt 0) {
     Write-Error ('{0} test(s) failed.' -f $result.FailedCount)

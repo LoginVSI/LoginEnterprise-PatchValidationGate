@@ -33,6 +33,7 @@ function Write-LEGateLog {
         [switch]$AsJson
     )
 
+    if ($env:GITHUB_ACTIONS -eq 'true' -and $env:LEGATE_TEST_MODE -ne 'true') { return }
     $useJson = $AsJson.IsPresent -or ($env:LEGATE_LOG_FORMAT -eq 'json')
     $timestamp = ConvertTo-LEGateTimestamp -Value (Get-LEGateUtcNow)
 

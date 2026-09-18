@@ -1,43 +1,47 @@
 name: ci
-
-# Lint and unit tests. Needs no appliance and no secrets. Runs in Windows
-# PowerShell 5.1 on purpose: that is the floor the module has to work on.
-# validate-patch.yml is the gate itself and runs on a self-hosted runner later.
-
 on:
   push:
     branches: [main]
   pull_request:
-
 permissions:
   contents: read
-
 jobs:
-  lint-and-unit-tests:
+  offline:
     runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shell: [powershell, pwsh]
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Show PowerShell version
-        shell: powershell
-        run: $PSVersionTable.PSVersion.ToString()
-
-      - name: Install Pester and PSScriptAnalyzer
-        shell: powershell
-        run: .\scripts\Initialize-DevEnvironment.ps1
-
-      - name: Lint
-        shell: powershell
-        run: .\scripts\Invoke-Lint.ps1
-
-      - name: Unit tests
-        shell: powershell
-        run: .\tests\Invoke-Tests.ps1 -Output Normal
-
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          name: pester-results
-          path: tests/results/
-          if-no-files-found: ignore
+          persist-credentials: false
+      - name: Install test tooling
+        shell: ${{ matrix.shell }}
+        run: |
+          .\scripts\Initialize-DevEnvironment.ps1
+      - name: Lint
+        shell: ${{ matrix.shell }}
+        run: |
+          .\scripts\Invoke-Lint.ps1
+      - name: Offline unit and full-flow tests
+        shell: ${{ matrix.shell }}
+        run: |
+          .\tests\Invoke-Tests.ps1 -Output Normal
+      - name: Synthetic scenarios
+        shell: ${{ matrix.shell }}
+        run: |
+          .\scripts\Invoke-OfflineScenario.ps1
+      - name: Static workflows and skill artifacts
+        shell: ${{ matrix.shell }}
+        run: |
+          py -m pip install --target .private/python PyYAML==6.0.3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py .\scripts\Test-RepositoryArtifacts.py
+      - name: Publish counts only, never the machine-bearing NUnit report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: offline-summary-${{ matrix.shell }}
+          path: tests/results/summary-*.json
+          if-no-files-found: warn

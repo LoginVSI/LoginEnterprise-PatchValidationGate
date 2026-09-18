@@ -1,76 +1,234 @@
 name: validate-patch
-
 on:
   workflow_dispatch:
     inputs:
       change_id:
-        description: Identifier for the change under validation
+        description: Fresh public-safe change identifier
         required: true
       policy_file:
-        description: Policy file path
-        default: policies/default.policy.json
+        description: Configured policy path inside repository
+        default: policies/demo.local.json
+      change_manifest:
+        description: Configured manifest path inside repository
+        default: examples/changes/demo.local.json
+      response_profile:
+        description: Capture-confirmed response profile path
+        default: config/response-profile.local.json
+      adapter:
+        type: choice
+        options: [app-update, break, noop]
+        default: app-update
+      target_key:
+        description: Canonical shared target alias; host comes from LE_TARGET secret
+        type: choice
+        options: [demo-lab]
+        default: demo-lab
       promotion_mode:
-        description: manual waits for a reviewer; auto promotes on PASS when guardrails are met
         type: choice
         options: [manual, auto]
         default: manual
-
+      continuous_test_name:
+        default: patch-gate-continuous
+      resume:
+        type: boolean
+        default: false
+permissions:
+  contents: read
+concurrency:
+  group: le-target-${{ inputs.target_key }}
+  cancel-in-progress: false
+env:
+  LE_SKIP_CERT_CHECK: ${{ vars.LE_SKIP_CERT_CHECK }}
 jobs:
   validate:
-    runs-on: [self-hosted, windows]
+    if: github.ref == 'refs/heads/main' && github.repository == 'LoginVSI/LoginEnterprise-PatchValidationGate'
+    runs-on: [self-hosted, windows, le-gate]
+    permissions:
+      contents: read
+      issues: write
     outputs:
-      verdict: ${{ steps.evaluate.outputs.verdict }}
+      verdict: ${{ steps.gate.outputs.verdict }}
+      manifest_hash: ${{ steps.gate.outputs.manifest_hash }}
+      issue_number: ${{ steps.gate.outputs.issue_number }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Preflight
-        shell: powershell
-        run: |
-          Write-Host "TODO: resolve test, validate policy, check appliance reachability"
-      - name: Run Login Enterprise validation
-        shell: powershell
-        run: |
-          Write-Host "TODO: start test and poll to completion"
-      - name: Evaluate policy
-        id: evaluate
-        shell: powershell
-        run: |
-          Write-Host "TODO: deterministic evaluation"
-          "verdict=INCONCLUSIVE" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-      - name: Upload evidence
-        if: always()
-        uses: actions/upload-artifact@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
-          name: evidence-${{ inputs.change_id }}
-          path: evidence/
-          if-no-files-found: ignore
+          persist-credentials: false
+      - name: Materialize private configuration
+        shell: powershell
+        env:
+          LE_POLICY_JSON: ${{ secrets.LE_POLICY_JSON }}
+          LE_CHANGE_JSON: ${{ secrets.LE_CHANGE_JSON }}
+          LE_RESPONSE_PROFILE_JSON: ${{ secrets.LE_RESPONSE_PROFILE_JSON }}
+        run: |
+          .\scripts\Initialize-WorkflowConfig.ps1
+      - name: Validate and publish safe evidence
+        id: gate
+        shell: powershell
+        env:
+          LE_BASE_URL: ${{ secrets.LE_BASE_URL }}
+          LE_API_TOKEN: ${{ secrets.LE_API_TOKEN }}
+          LE_TARGET: ${{ secrets.LE_TARGET }}
+          TARGET_USER: ${{ secrets.TARGET_USER }}
+          TARGET_PASSWORD: ${{ secrets.TARGET_PASSWORD }}
+          LE_STATE_ROOT: ${{ vars.LE_STATE_ROOT }}
+          LE_PRIVATE_ROOT: ${{ vars.LE_PRIVATE_ROOT }}
+          GITHUB_TOKEN: ${{ github.token }}
+          LE_CHANGE_ID: ${{ inputs.change_id }}
+          POLICY_FILE: ${{ inputs.policy_file }}
+          CHANGE_MANIFEST: ${{ inputs.change_manifest }}
+          RESPONSE_PROFILE: ${{ inputs.response_profile }}
+          ADAPTER: ${{ inputs.adapter }}
+          PROMOTION_MODE: ${{ inputs.promotion_mode }}
+          CONTINUOUS_TEST: ${{ inputs.continuous_test_name }}
+          RESUME: ${{ inputs.resume }}
+        run: |
+          Import-Module .\src\LEGate\LEGate.psd1 -Force
+          .\scripts\Invoke-Gate.ps1 -PolicyFile $env:POLICY_FILE -ChangeManifest $env:CHANGE_MANIFEST -ResponseProfile $env:RESPONSE_PROFILE -Adapter $env:ADAPTER -PromotionMode $env:PROMOTION_MODE -ContinuousTestName $env:CONTINUOUS_TEST -Resume:(ConvertTo-LEGateBoolean $env:RESUME) -ReportIssue -PublicationPath .published/validation
+      - name: Upload only the sanitized projection
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .published/validation/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
 
   promote-manual:
     needs: validate
-    if: needs.validate.outputs.verdict == 'PASS' && inputs.promotion_mode == 'manual'
-    runs-on: [self-hosted, windows]
+    if: needs.validate.result == 'success' && needs.validate.outputs.verdict == 'PASS' && inputs.promotion_mode == 'manual'
+    runs-on: [self-hosted, windows, le-gate]
     environment: promotion-approval
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    outputs:
+      promotion_hash: ${{ steps.promote.outputs.promotion_hash }}
     steps:
-      - name: Handoff to deployment system
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .download/validation
+      - name: Materialize private policy
         shell: powershell
+        env:
+          LE_POLICY_JSON: ${{ secrets.LE_POLICY_JSON }}
         run: |
-          Write-Host "TODO: write promotion record or call the existing deployment system"
+          .\scripts\Initialize-WorkflowConfig.ps1
+      - name: Verify approval and record simulated promotion
+        id: promote
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_HASH: ${{ needs.validate.outputs.manifest_hash }}
+          ISSUE_NUMBER: ${{ needs.validate.outputs.issue_number }}
+          POLICY_FILE: ${{ inputs.policy_file }}
+          BUNDLE_NAME: validation-${{ github.run_id }}-${{ github.run_attempt }}
+          LE_APPROVAL_TIME_EVIDENCE: ${{ vars.LE_APPROVAL_TIME_EVIDENCE }}
+          LE_PRIVATE_ROOT: ${{ vars.LE_PRIVATE_ROOT }}
+        run: |
+          .\scripts\Invoke-Handoff.ps1 -Stage promote -BundlePath .download/validation -ExpectedManifestHash $env:EXPECTED_HASH -BundleName $env:BUNDLE_NAME -Mode manual -PolicyFile $env:POLICY_FILE -IssueNumber ([int]$env:ISSUE_NUMBER) -OutputPath .published/handoff
+      - name: Preserve promotion records and diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: promotion-manual-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .published/handoff/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
 
   promote-auto:
     needs: validate
-    if: needs.validate.outputs.verdict == 'PASS' && inputs.promotion_mode == 'auto'
-    runs-on: [self-hosted, windows]
+    if: needs.validate.result == 'success' && needs.validate.outputs.verdict == 'PASS' && inputs.promotion_mode == 'auto'
+    runs-on: [self-hosted, windows, le-gate]
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    outputs:
+      promotion_hash: ${{ steps.promote.outputs.promotion_hash }}
     steps:
-      - name: Check guardrails and hand off
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .download/validation
+      - name: Materialize private policy
         shell: powershell
+        env:
+          LE_POLICY_JSON: ${{ secrets.LE_POLICY_JSON }}
         run: |
-          Write-Host "TODO: verify policy guardrails, write promotion record, emit event"
+          .\scripts\Initialize-WorkflowConfig.ps1
+      - name: Verify approval and record simulated promotion
+        id: promote
+        shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          EXPECTED_HASH: ${{ needs.validate.outputs.manifest_hash }}
+          ISSUE_NUMBER: ${{ needs.validate.outputs.issue_number }}
+          POLICY_FILE: ${{ inputs.policy_file }}
+          BUNDLE_NAME: validation-${{ github.run_id }}-${{ github.run_attempt }}
+          LE_APPROVAL_TIME_EVIDENCE: ${{ vars.LE_APPROVAL_TIME_EVIDENCE }}
+        run: |
+          .\scripts\Invoke-Handoff.ps1 -Stage promote -BundlePath .download/validation -ExpectedManifestHash $env:EXPECTED_HASH -BundleName $env:BUNDLE_NAME -Mode auto -PolicyFile $env:POLICY_FILE -IssueNumber ([int]$env:ISSUE_NUMBER) -OutputPath .published/handoff
+      - name: Preserve promotion records and diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: promotion-auto-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .published/handoff/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7
 
   continuous-testing:
-    needs: [promote-manual, promote-auto]
-    if: always() && (needs.promote-manual.result == 'success' || needs.promote-auto.result == 'success')
-    runs-on: [self-hosted, windows]
+    needs: [validate, promote-manual, promote-auto]
+    if: always() && !cancelled() && needs.validate.result == 'success' && needs.validate.outputs.verdict == 'PASS' && (needs.promote-manual.result == 'success' || needs.promote-auto.result == 'success')
+    runs-on: [self-hosted, windows, le-gate]
+    permissions:
+      contents: read
+      actions: read
+      issues: write
     steps:
-      - name: Hand workflow to Login Enterprise continuous testing
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: validation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .download/validation
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: promotion-${{ inputs.promotion_mode }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .download/promotion
+      - name: Verify promotion and start continuous testing
         shell: powershell
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          LE_BASE_URL: ${{ secrets.LE_BASE_URL }}
+          LE_API_TOKEN: ${{ secrets.LE_API_TOKEN }}
+          EXPECTED_HASH: ${{ needs.validate.outputs.manifest_hash }}
+          LE_STATE_ROOT: ${{ vars.LE_STATE_ROOT }}
+          LE_TARGET: ${{ secrets.LE_TARGET }}
+          PROMOTION_HASH: ${{ needs.promote-manual.outputs.promotion_hash || needs.promote-auto.outputs.promotion_hash }}
+          ISSUE_NUMBER: ${{ needs.validate.outputs.issue_number }}
+          CONTINUOUS_TEST: ${{ inputs.continuous_test_name }}
         run: |
-          Write-Host "TODO: schedule the same application workflow as a continuous test"
+          .\scripts\Invoke-Handoff.ps1 -Stage continuous -BundlePath .download/validation -ExpectedManifestHash $env:EXPECTED_HASH -PromotionRecordPath .download/promotion/promotion-record.json -ExpectedPromotionHash $env:PROMOTION_HASH -IssueNumber ([int]$env:ISSUE_NUMBER) -ContinuousTestName $env:CONTINUOUS_TEST -OutputPath .published/continuous
+      - name: Preserve continuous handoff separately
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: continuous-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .published/continuous/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 7

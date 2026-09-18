@@ -48,14 +48,22 @@ Describe 'Get-LEGateAllPages' {
         $items.Count | Should -Be 0
     }
 
-    It 'stops when a page comes back empty even if totalCount says otherwise' {
+    It 'rejects a premature empty page rather than claiming completeness' {
         Mock -ModuleName LEGate Invoke-RestMethod { New-LEGatePage -Items @() -TotalCount 100 }
-        $items = @(InModuleScope LEGate -Parameters @{ s = $session } { Get-LEGateAllPages -Session $s -Path '/tests' -Query @{ count = 5 } })
-        $items.Count | Should -Be 0
+        { InModuleScope LEGate -Parameters @{ s = $session } { Get-LEGateAllPages -Session $s -Path '/tests' -Query @{ count = 5 } } } | Should -Throw '*Premature*'
         Should -Invoke -ModuleName LEGate Invoke-RestMethod -Times 1 -Exactly
     }
 
     It 'requires count in the query' {
         { InModuleScope LEGate -Parameters @{ s = $session } { Get-LEGateAllPages -Session $s -Path '/tests' -Query @{ filter = 'x' } } } | Should -Throw '*count*'
+    }
+    It 'rejects unexpected envelopes and missing totals' {
+        Mock -ModuleName LEGate Invoke-RestMethod { [pscustomobject]@{ data = @() } }
+        { InModuleScope LEGate -Parameters @{ s = $session } { Get-LEGateAllPages -Session $s -Path '/tests' -Query @{ count = 5 } } } | Should -Throw
+        Mock -ModuleName LEGate Invoke-RestMethod { [pscustomobject]@{ items = @(); offset = 0 } }
+        { InModuleScope LEGate -Parameters @{ s = $session } { Get-LEGateAllPages -Session $s -Path '/tests' -Query @{ count = 5 } } } | Should -Throw
+    }
+    It 'refuses page-limit exhaustion rather than returning a partial success' {
+        { InModuleScope LEGate -Parameters @{ s = $session } { Get-LEGateAllPages -Session $s -Path '/tests' -Query @{ count = 1 } -MaxPages 1 } } | Should -Throw '*limit*'
     }
 }

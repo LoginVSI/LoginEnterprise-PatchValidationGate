@@ -17,7 +17,16 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-Import-Module -Name PSScriptAnalyzer -ErrorAction Stop
+if (Get-Module -ListAvailable -Name PSScriptAnalyzer) {
+    Import-Module -Name PSScriptAnalyzer -ErrorAction Stop
+}
+else {
+    $documents = [Environment]::GetFolderPath('MyDocuments')
+    $moduleRoot = Join-Path -Path $documents -ChildPath 'WindowsPowerShell/Modules/PSScriptAnalyzer'
+    $installed = Get-ChildItem -LiteralPath $moduleRoot -Filter PSScriptAnalyzer.psd1 -Recurse -ErrorAction Stop | Sort-Object -Property FullName -Descending | Select-Object -First 1
+    if (-not $installed) { throw 'PSScriptAnalyzer is unavailable. Run Initialize-DevEnvironment in the intended shell.' }
+    Import-Module -Name $installed.FullName -ErrorAction Stop
+}
 
 $repoRoot = (Resolve-Path -Path (Join-Path -Path $PSScriptRoot -ChildPath '..')).Path
 $rootSettings = Join-Path -Path $repoRoot -ChildPath 'PSScriptAnalyzerSettings.psd1'
@@ -25,7 +34,7 @@ $testSettings = Join-Path -Path $repoRoot -ChildPath 'tests\PSScriptAnalyzerSett
 $testsFolder = Join-Path -Path $repoRoot -ChildPath 'tests'
 
 if (-not $Path) {
-    $Path = @('src', 'scripts', 'tests') | ForEach-Object { Join-Path -Path $repoRoot -ChildPath $_ }
+    $Path = @('src', 'scripts', 'tests', 'adapters') | ForEach-Object { Join-Path -Path $repoRoot -ChildPath $_ }
 }
 
 $findings = @()

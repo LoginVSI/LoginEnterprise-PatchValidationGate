@@ -1,0 +1,20 @@
+{
+  "manifestVersion": "1",
+  "kind": "pinned-msi",
+  "application": "7zip",
+  "installDirectory": "C:\\LEGateDemo\\7zip",
+  "directoryProperty": "INSTALLDIR",
+  "executable": "7zFM.exe",
+  "before": {
+    "version": "CONFIGURE_BEFORE_VERSION",
+    "url": "CONFIGURE_HTTPS_MSI_URL",
+    "sha256": "CONFIGURE_SHA256",
+    "productCode": "CONFIGURE_MSI_PRODUCT_CODE"
+  },
+  "after": {
+    "version": "CONFIGURE_AFTER_VERSION",
+    "url": "CONFIGURE_HTTPS_MSI_URL",
+    "sha256": "CONFIGURE_SHA256",
+    "productCode": "CONFIGURE_MSI_PRODUCT_CODE"
+  }
+}

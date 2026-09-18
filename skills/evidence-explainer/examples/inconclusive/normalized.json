@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1",
+  "runId": "synthetic-run",
+  "state": null,
+  "result": null,
+  "complete": false,
+  "integrityValid": false,
+  "timedOut": false,
+  "infrastructureFailure": false,
+  "loginSuccessful": null,
+  "totalExecutions": 0,
+  "applications": [],
+  "errors": [
+    "response-normalization-failed"
+  ],
+  "provenance": "synthetic"
+}

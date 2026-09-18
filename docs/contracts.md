@@ -2,7 +2,7 @@
 
 Three boundaries where something outside this repo plugs in. Each is a plain JSON shape with no dependency on a particular vendor. The point is that Intune, ConfigMgr, Autopatch, a Citrix or Omnissa image pipeline, or ServiceNow can sit on either side of the gate without the gate knowing which one it is.
 
-None of these are implemented yet. This document fixes the shapes so the implementations, when they come, do not have to negotiate.
+These boundaries are implemented for the reference lab. Production deployment remains simulated.
 
 All timestamps are UTC ISO 8601 with millisecond precision and a `Z` suffix, for example `2026-09-11T20:30:15.250Z`. All ids are strings. Unknown fields must be ignored by readers and preserved by anything that copies a document.
 
@@ -146,7 +146,7 @@ The evidence manifest lists what is in the bundle, where it came from, and how t
 }
 ```
 
-Today the module writes only `run.json` into `evidence/{changeId}/`. The manifest and verdict come with the evaluator.
+The gate writes private bundles beneath the configured evidence root, change ID and unique attempt directory.
 
 ## 3. Promotion handoff contract
 
@@ -195,3 +195,15 @@ A receiver that gets anything other than `verdict: PASS` in this document should
 ## Changing a contract
 
 Bump the version field, keep the old shape readable for one release, note it in `CHANGELOG.md`, and update the examples here in the same commit. Readers ignore unknown fields, so adding an optional field does not need a version bump. Removing or renaming one does.
+
+## Implemented extensions and integrity rules
+
+Unavailable preflight identities/versions are null, not fabricated IDs. Manifest extensions are provenance (synthetic, appliance-capture, unavailable), sourceCommit, changeManifestHash, identityHash, completeness and publication. Verdict applications records required application outcomes. Raw responses are parsed and serialized as JSON with request/page metadata; hashes cover exact stored bytes, not original HTTP wire encoding.
+
+The manifest excludes itself and manifest.sha256 from files. The sidecar hashes exact manifest bytes, avoiding circular hashing. Consumers also receive the expected hash independently, reject unsafe paths/reparse points, check all sizes/hashes, reject unlisted files and compare verdict/manifest identity. A mutable bundle and its own sidecar alone are not proof of authenticity.
+
+Publication is a deliberate projection exception to unknown-field preservation: it drops unknown/free-text fields rather than copying secrets. The nested shape remains, with aliases for IDs, null private metadata, and publication.privateManifestSha256 linking to the private original. Raw responses and screenshots remain private. The projection's hashes cover its own bytes; its completeness describes the validation evidence, not public disclosure of every raw file.
+
+Promotion adds simulated: true, provenance and approval provenance. Manual time evidence is a separate operator-supplied authoritative capture, checked against GitHub reviewer/run/environment. It is not a timestamp field invented in GitHub review history. The private approval capture is retained; the published record carries its time-evidence hash. Auto approval records policy. Synthetic simulation is explicitly flagged and cannot enter the live workflow.
+
+Later promotion, continuous, restoration and handoff-error records are separate from immutable validation. Continuous records link validationManifestSha256. The workflow passes both validation and promotion hashes independently between jobs. Reporting/handoff failure does not rewrite verdict.json. Restore failure requires recovery even if the original validation passed.

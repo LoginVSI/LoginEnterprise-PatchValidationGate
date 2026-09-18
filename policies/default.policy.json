@@ -1,23 +1,30 @@
 {
-  "policyVersion": "0.1",
-  "name": "default-functional",
-  "test": { "name": "REPLACE_WITH_LE_APPLICATION_TEST_NAME" },
+  "policyVersion": "1",
+  "name": "demo-functional",
+  "test": {
+    "name": "patch-gate-app"
+  },
   "execution": {
     "maxWaitMinutes": 45,
     "pollIntervalSeconds": 30
   },
   "functional": {
-    "requiredApplications": [],
-    "allowStepRetries": 1,
+    "requiredApplications": [
+      "CONFIGURE_NOTEPAD_APPLICATION_ID",
+      "CONFIGURE_DEMO_APPLICATION_ID"
+    ],
+    "allowStepRetries": 0,
     "failOnAnyApplicationFailure": true
   },
   "performance": {
-    "enabled": false,
-    "note": "Thresholds need a baseline with more than one run behind it. Deferred."
+    "enabled": false
   },
   "promotion": {
     "defaultMode": "manual",
-    "autoRequires": ["verdict:PASS", "results-complete"]
+    "autoRequires": [
+      "verdict:PASS",
+      "results-complete"
+    ]
   },
   "inconclusiveWhen": [
     "test-not-found",
