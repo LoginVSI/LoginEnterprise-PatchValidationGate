@@ -59,7 +59,8 @@ for job_result in ("success", "failure", "cancelled", "skipped"):
                 if verdict != "PASS" or job_result != "success":
                     assert not allowed
 
-skill = root / "skills/evidence-explainer"
+assert "[CLAUDE.md](CLAUDE.md)" in (root / "AGENTS.md").read_text()
+skill = root / ".agents/skills/evidence-explainer"
 text = (skill / "SKILL.md").read_text()
 parts = text.split("---", 2)
 frontmatter = yaml.safe_load(parts[1])

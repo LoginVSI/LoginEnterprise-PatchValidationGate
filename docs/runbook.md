@@ -63,4 +63,4 @@ Auto mode records policy as approver after both supported guardrails. Unknown gu
 
 ## Evidence explainer
 
-Give an agent skills/evidence-explainer/SKILL.md and an evidence path, plus a trusted manifest hash if available. It reports the recorded verdict, cites exact fields, distinguishes handoff and synthetic provenance, and suggests investigation without claiming root cause. It cannot execute the pipeline. Worked examples and an adversarial text fixture are included. Structural checks do not establish model compliance.
+Codex discovers the repository skill at [.agents/skills/evidence-explainer/SKILL.md](../.agents/skills/evidence-explainer/SKILL.md). Claude users can load the same file explicitly. Give the agent an evidence path and a trusted manifest hash if available. The skill reports the recorded verdict, cites exact fields, distinguishes handoff and synthetic provenance, and suggests investigation without claiming root cause. It cannot execute the pipeline. Worked examples and an adversarial text fixture remain alongside the skill. Structural checks do not establish actual discovery or model compliance.

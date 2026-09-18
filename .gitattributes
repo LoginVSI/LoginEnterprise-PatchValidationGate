@@ -3,6 +3,6 @@
 *.psm1 text eol=crlf
 *.psd1 text eol=crlf
 # Evidence hashes cover exact bytes. Do not normalize worked-example bundles.
-skills/evidence-explainer/examples/pass/** -text whitespace=cr-at-eol
-skills/evidence-explainer/examples/fail/** -text whitespace=cr-at-eol
-skills/evidence-explainer/examples/inconclusive/** -text whitespace=cr-at-eol
+.agents/skills/evidence-explainer/examples/pass/** -text whitespace=cr-at-eol
+.agents/skills/evidence-explainer/examples/fail/** -text whitespace=cr-at-eol
+.agents/skills/evidence-explainer/examples/inconclusive/** -text whitespace=cr-at-eol

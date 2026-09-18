@@ -26,6 +26,6 @@ The scenarios generate labeled synthetic PASS, FAIL, and INCONCLUSIVE bundles in
 
 Use the [runbook](docs/runbook.md), [live acceptance checklist](docs/live-acceptance.md), and [API assumptions](docs/api-assumptions.md). Configure both existing tests, both required application IDs, verified pinned installers, credentials, private storage, and a capture-confirmed response profile. Placeholders intentionally fail live preflight.
 
-Read the [contracts](docs/contracts.md), [verdict](docs/verdict.md), [security](docs/security.md), [portability notes](docs/portability.md), and [evidence-explainer skill](skills/evidence-explainer/SKILL.md). Current context is in [HANDOFF.md](HANDOFF.md).
+Read the [contracts](docs/contracts.md), [verdict](docs/verdict.md), [security](docs/security.md), [portability notes](docs/portability.md), and [evidence-explainer skill](.agents/skills/evidence-explainer/SKILL.md). Current context is in [HANDOFF.md](HANDOFF.md).
 
 Production integrations, Windows cumulative updates, scanners, and statistical performance qualification remain extension points. Part 1 is published. The Part 2 article needs genuine demonstrations; synthetic examples are not blog results.

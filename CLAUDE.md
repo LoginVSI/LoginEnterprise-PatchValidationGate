@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+This is the shared repository guidance for Claude and Codex. Root AGENTS.md directs Codex here. The read-only evidence-explainer skill and its resources are maintained at [.agents/skills/evidence-explainer/SKILL.md](.agents/skills/evidence-explainer/SKILL.md); Claude users can load that same file explicitly.
+
 Reference implementation: Login Enterprise as an evidence gate for patch promotion. Read README.md, docs/architecture.md, docs/verdict.md, and docs/api-notes.md before touching code. The long version of this file, written for AI coding agents, is docs/ai-agents.md. The integration shapes are in docs/contracts.md.
 
 ## Hard rules
