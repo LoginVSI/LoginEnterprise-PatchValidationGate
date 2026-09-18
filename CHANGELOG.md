@@ -4,6 +4,11 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+- Added reviewed v7 and v8-preview static OpenAPI references with explicit provenance and sanitization.
+- Aligned candidate overview selection/comparison, native Events, screenshot retrieval and continuous scheduling with v8-preview; added spec-derived regressions.
+- Separated customer setup from contributor dependencies and added read-only AI prompts and external-pipeline guidance.
+- Removed the public internal handoff document after preserving it privately. Historical copies remain in Git history.
+
 ## [0.1.0] - Unreleased
 
 ### Added
@@ -16,12 +21,12 @@ All notable changes to this project are recorded here. The format follows [Keep 
 - PSScriptAnalyzer settings with 5.1 compatibility rules and a lint wrapper.
 - GitHub Actions `ci.yml` running lint and unit tests in Windows PowerShell 5.1 on a hosted runner.
 - Smoke check script, developer setup script, and docs for setup, contributing, security, AI agents, and the three integration contracts.
-- Version call verified against a Login Enterprise 6.8.6 appliance. The first real test run is Part 2.
+- Version call verified against a Login Enterprise 6.8.6 appliance. This was a version call only; end-to-end gate acceptance remains pending.
 
 [Unreleased]: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/releases/tag/v0.1.0
 
-## Part 2 offline implementation (unreleased)
+## Offline gate implementation (unreleased)
 
 - Added strict results collection, normalization, pure functional policy, byte-verified evidence and allowlisted publication.
 - Added pinned MSI update, reversible executable break and noop adapters; explicit credentials, durable identity/target ownership, resume and restoration.

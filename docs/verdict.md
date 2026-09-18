@@ -26,3 +26,5 @@ Test-LEGatePolicy takes normalized results, policy and explicit context. It read
 Only allowStepRetries: 0 is supported. The gate does not retry steps or hide reported failures. Appliance retry/count semantics require capture confirmation. Performance measurements and optional comparison are preserved without influencing policy. Unsupported settings are rejected.
 
 Invoke-Gate exit codes: 0 PASS, 1 FAIL, 2 INCONCLUSIVE or orchestration/reporting failure. A reporting failure can return 2 while preserving completed PASS evidence. Later promotion/continuous failures never rewrite the validation verdict.
+
+Native LE Events are workload observations, not this gate's verdicts or GitHub issue statuses. The gate requires nonempty scalar eventType values, recognizes the reviewed EventType enum and rejects malformed or contradictory relationships. Infrastructure/capacity/session failures prevent PASS; performance/custom-event text remains evidence without inventing a functional policy. A FAIL establishes observed application failure under the configured policy, not that the update caused it.

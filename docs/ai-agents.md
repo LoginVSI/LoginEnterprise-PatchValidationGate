@@ -1,11 +1,11 @@
-# Agent guidance
+# Contributor agent guidance
 
-Read CLAUDE.md, HANDOFF.md, API notes, verdict and contracts. Code establishes implementation status; genuine captures establish response shapes. Mocked tests are not live results.
+Read [repository rules](../CLAUDE.md), [architecture](architecture.md), [API notes](api-notes.md), [verdict](verdict.md) and [contracts](contracts.md). The reviewed specification establishes schemas; genuine captures establish observed behavior. Neither mocked tests nor static review establishes live acceptance.
 
-Approved offline scope includes the complete functional gate, lab apply/verify/revert adapters, reporting/approval, simulated promotion, continuous handoff, capture tools and one read-only evidence-explainer skill. Real fixtures are not required to start coding; they remain required for live acceptance.
+Keep PS5.1 compatibility, one function per file, thin HTTP, centralized logging/reason codes, explicit UTC context and a pure evaluator. Update API notes from the reviewed spec before adding calls. Do not generate a client or add PSLoginEnterprise. Track unresolved behavior in [API assumptions](api-assumptions.md).
 
-Keep PS5.1 compatibility, one function per file, thin HTTP, centralized logging/reason codes, explicit UTC context and a pure evaluator. No generated SDK or PSLoginEnterprise. Isolate uncertainty in docs/api-assumptions.md and the response profile rather than inventing fields.
+Preserve private evidence on failure, strict relationships and paging, durable shared-target ownership, restoration-before-reuse rules and separate validation/handoff outcomes. Never suppress failures to make checks pass. Use [contributor verification](contributing.md) and keep a concise [progress checkpoint](implementation-progress.md).
 
-Preserve evidence on failures. Reject unsafe paths, incompatible resume, unsupported policy and incomplete coverage. Never suppress a failure to make CI green. Validation and handoff outcomes are distinct.
+The existing explainer is read-only and treats bundle text as untrusted. Customer invocation and prompts are in [Explain evidence](explain-evidence.md). Preserve its example bytes/hashes unless a substantive correction is required. Structural checks are not model evaluation.
 
-The explainer treats all bundle text as untrusted and cannot mutate anything. Structural checks are not model evaluation. Live calls and publication require explicit task authority. Production integrations, scanners, cumulative updates and performance qualification remain deferred.
+Live calls and publication require explicit task authority. Production deployment, change scanning, cumulative updates and statistical performance qualification remain extensions. Authoritative manual approval-time acquisition remains blocked as described in [approval evidence](approval-evidence.md).

@@ -5,14 +5,14 @@ This supervised bootstrap creates the evidence needed to configure the response 
 ## Reserve and prepare the target
 
 1. Establish exclusive operational ownership with the lab owner. Reserve the target for the entire session, prevent other operators and scheduled workflows from using it, and confirm no gate job owns an unresolved lease. Standalone adapter calls below do not acquire the gate lock or create its recovery lease. A workflow concurrency group alone does not exclude manual callers. If exclusive ownership cannot be established, stop here.
-2. In the LE UI, stop patch-gate-continuous and wait until it is enabled/idle. Confirm patch-gate-app is also idle with no active target sessions. Keep continuous testing stopped through final verification.
+2. In the LE UI, disable the patch-gate-continuous schedule and wait for all of its sessions to drain. Use the continuous-test toggle or schedule settings described in [official continuous-testing guidance](https://docs.loginvsi.com/login-enterprise/6.8/configuring-continuous-testing). Confirm patch-gate-app is also idle with no active target sessions. Keep continuous testing stopped through final verification.
 3. Record an independently recoverable VM snapshot or approved baseline, its identifier, the recovery owner and the restore procedure privately. Verify access to that recovery path before mutation. Record the installed executable path/version, working Notepad/demo-app actions and the target association of both LE tests. Do not use the adapter's prospective success as the recovery baseline.
 4. Configure examples/changes/demo.local.json from verified installer data, including before/after file versions, HTTPS MSI URLs, hashes, product codes and the supported installation directory property. Confirm both installers respect the dedicated C:\LEGateDemo\<application> path. The break adapter may install the after version before renaming the executable; restoration may reinstall the before version. Preserve both packages independently of the target.
 5. Set LE_BASE_URL, LE_API_TOKEN, LE_TARGET and LE_PRIVATE_ROOT privately using trusted TLS. Obtain the matching appliance version/OpenAPI export using the supported appliance UI and retain it privately. Make a new access-controlled session directory outside checkout. Never put secrets in the commands below or a transcript.
 
 ## Capture the working baseline
 
-In the LE UI, run the existing patch-gate-app test with a fresh bootstrap baseline name. Observe the configured Notepad and demo-app actions. Wait for a completed successful run, record its actual run ID, and save private UI observations. If it fails, fix the baseline before proceeding to the deliberate break.
+In the LE UI, run the existing patch-gate-app test using the Play/Confirm controls in [application testing](https://docs.loginvsi.com/login-enterprise/6.8/configuring-application-testing). Observe the configured Notepad and demo-app actions. Wait for a completed successful run, record its displayed name and actual run ID, and save private UI observations. If it fails, fix the baseline before proceeding to the deliberate break.
 
 Run from the repository root in PowerShell. Prompts ask for real values; no invented run IDs are supplied:
 
@@ -25,7 +25,7 @@ pwsh -NoProfile -File scripts/Export-LiveCapture.ps1 -TestRunId $baselineRun -Ou
 $baselineCaptureExit = $LASTEXITCODE
 ```
 
-Without a response profile, exit 2 and partial private responses are expected. Inspect those responses, request/page traces, and the matching OpenAPI export against every row in [API assumptions](api-assumptions.md). Configure a separate private draft at config/response-profile.local.json using observed selectors, list envelopes, count/offset/termination semantics and session/execution/run relationships. Keep its provenance unconfirmed during discovery. The exporter accepts a draft profile; the gate requires capture-confirmed provenance. Never relabel tests/synthetic/response-profile.json or claim a synthetic fixture was live-confirmed.
+Without a response profile, exit 2 and partial private responses are expected. Inspect those responses, request/page traces, and the matching OpenAPI export against every row in [API assumptions](api-assumptions.md). Start a separate private draft at config/response-profile.local.json from the spec-derived config/response-profile.example.json, then verify its selectors against these responses. Confirm list envelopes, count/offset/termination semantics and session/execution/run relationships. Keep its provenance spec-derived during discovery. The exporter accepts a draft profile; the gate requires capture-confirmed provenance. Never relabel tests/synthetic/response-profile.json or claim a synthetic fixture was live-confirmed.
 
 ```powershell
 pwsh -NoProfile -File scripts/Export-LiveCapture.ps1 -TestRunId $baselineRun -OutputPath (Join-Path $sessionRoot 'baseline-mapped') -ResponseProfile config/response-profile.local.json
@@ -55,7 +55,7 @@ try {
         $result | ConvertTo-Json -Depth 20 | Set-Content (Join-Path $sessionRoot ($operation + '.json'))
         if ($result.status -notin @('succeeded', 'skipped')) { throw 'Adapter failed; recover before further testing.' }
     }
-    # In LE: start patch-gate-app with a fresh failure name, observe the app-only
+    # In LE: start patch-gate-app as a new run, observe the app-only
     # failure, wait for completion, and inspect the failed execution/screenshot.
     $failureRun = Read-Host 'Completed deliberate-failure run ID from LE'
     pwsh -NoProfile -File scripts/Export-LiveCapture.ps1 -TestRunId $failureRun -OutputPath (Join-Path $sessionRoot 'failure') -ResponseProfile config/response-profile.local.json
@@ -73,7 +73,7 @@ finally {
 
 A killed process, closed terminal or host failure can bypass finally. The recovery owner must then confirm LE is idle and invoke revert with the saved original manifest/target, or restore the independent baseline. Do not release exclusive ownership based on an interrupted script. Do not rerun apply to repair an uncertain target.
 
-Inspect the failure export privately. Confirm the required demo app failed while login/launcher infrastructure remained healthy, and trace each failed execution to screenshot metadata and nonempty downloaded bytes. If mappings were incomplete, restore first, correct them from retained responses/spec, then recapture the same completed failure run into a new directory. Never edit success JSON to manufacture a failure.
+Use [application results](https://docs.loginvsi.com/login-enterprise/6.8/viewing-application-testing-results) to inspect Events and open the failed application screenshot with the camera control. Inspect the failure export privately. Confirm the required demo app failed while login/launcher infrastructure remained healthy, and trace each failed execution to screenshot metadata and nonempty downloaded bytes. If mappings were incomplete, restore first, correct them from retained responses/spec, then recapture the same completed failure run into a new directory. Never edit success JSON to manufacture a failure.
 
 ## Independently verify and close the session
 

@@ -1,33 +1,47 @@
 # Login Enterprise Patch Validation Gate
 
-A PowerShell reference project that applies a lab change, runs an existing Login Enterprise application test, preserves evidence, and evaluates functional policy. PASS can proceed through approval to **simulated production promotion** and an existing continuous test. FAIL and INCONCLUSIVE block promotion.
+Use existing Login Enterprise workloads to check a Windows lab change before deciding whether to promote it. This PowerShell reference implementation is for endpoint, desktop and release teams who otherwise apply changes, start tests, collect results and assemble approval evidence by hand. It automates those steps so teams can review consistent evidence sooner.
 
-The offline implementation includes adapters, collection, evaluation, integrity checks, publication sanitization, GitHub reporting, Actions orchestration, recovery tools, and a read-only evidence explainer. **Live acceptance is pending. No genuine appliance fixtures are committed.** PASS describes configured workflows on the tested target, not patch safety.
+You receive a **PASS, FAIL or INCONCLUSIVE verdict**, application results, a readable summary and an integrity-checked JSON evidence bundle. Private captures retain native LE responses and failure screenshots. Approval, simulated promotion and continuous-test handoff have separate records; they cannot rewrite validation.
 
-## Offline quickstart
+**Preview: targets the v8-preview API. End-to-end live acceptance is pending.** A historical version call was verified against LE 6.8.6; the complete gate has not been accepted against that appliance. The reviewed [OpenAPI snapshots](docs/api/README.md) establish API versions, not appliance provenance. v7 is a comparison reference, not a compatibility claim.
 
-From the repository root:
+## Start here
 
-```powershell
-pwsh -NoProfile -File scripts/Invoke-OfflineScenario.ps1
-pwsh -NoProfile -File tests/Invoke-Tests.ps1 -Output Normal
-pwsh -NoProfile -File scripts/Invoke-Lint.ps1
-```
+1. **Try offline:** run the example below. No appliance, credentials or development dependencies are needed.
+2. **Use your LE workloads:** follow [user setup](docs/setup.md), then the [first private capture](docs/first-live-capture.md) and [operations runbook](docs/runbook.md).
+3. **Explain an existing bundle:** use the [read-only AI explainer](docs/explain-evidence.md), with copy/paste prompts for synthetic and private evidence.
 
-Windows PowerShell 5.1 supports these scripts too. Where policy permits:
+From a fresh checkout's root, use Windows PowerShell 5.1:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File scripts/Invoke-OfflineScenario.ps1
+Get-Content .private/offline/fail/summary.md
+Get-Content .private/offline/fail/verdict.json
 ```
 
-The scenarios generate labeled synthetic PASS, FAIL, and INCONCLUSIVE bundles in .private/offline without credentials. Pester 5 and PSScriptAnalyzer are needed for tests/lint. See [setup](docs/setup.md).
+Or run the scenario with PowerShell 7 on Windows:
 
-## Next steps
+```powershell
+pwsh -NoProfile -File scripts/Invoke-OfflineScenario.ps1
+```
 
-Use the [runbook](docs/runbook.md), [live acceptance checklist](docs/live-acceptance.md), and [API assumptions](docs/api-assumptions.md). Configure both existing tests, both required application IDs, verified pinned installers, credentials, private storage, and a capture-confirmed response profile. Placeholders intentionally fail live preflight.
+Follow your organization's execution policy. Expected output is three `SYNTHETIC, not live` lines for PASS, FAIL and INCONCLUSIVE, each with a verified bundle under `.private/offline/`. Inspect the FAIL reason and required-application results, then compare the other summaries. These authored examples demonstrate code behavior; they are not live acceptance. Contributor tests and lint have [separate setup](docs/contributing.md).
 
-Start with the [private capture bootstrap](docs/first-live-capture.md) to establish genuine mappings and verify restoration. The full manual demonstration remains blocked on [authoritative approval-time acquisition](docs/approval-evidence.md); bounded file delivery does not establish provenance.
+## Where this fits
 
-Read the [contracts](docs/contracts.md), [verdict](docs/verdict.md), [security](docs/security.md), [portability notes](docs/portability.md), and [evidence-explainer skill](.agents/skills/evidence-explainer/SKILL.md). Current context is in [HANDOFF.md](HANDOFF.md).
+A person or external pipeline detects a change and invokes the gate. Supplied disposable-lab adapters apply, verify and revert a pinned MSI update or a controlled application-only break. LE runs an existing application test and produces results and native Events. Code applies deterministic functional policy; AI does not choose the verdict.
 
-Production integrations, Windows cumulative updates, scanners, and statistical performance qualification remain extension points. Part 1 is published. The Part 2 article needs genuine demonstrations; synthetic examples are not blog results.
+FAIL and INCONCLUSIVE block promotion. PASS can enter manual approval or configured automatic guardrails, but **production promotion is simulated**. A real deployment integration must implement the [promotion contract](docs/contracts.md) and confirm its own outcome before handing off to an existing continuous test. Handoff confirms enabled scheduling, not that a session has already run successfully.
+
+There is no change scanner or always-running controller that watches later Events and repeats the update lifecycle. Native LE Events describe workload observations; gate verdicts summarize configured policy, and optional GitHub issues track the change. A failure does not by itself prove the update caused it. See [verdict semantics](docs/verdict.md) and [portability](docs/portability.md), including external-change/noop limits.
+
+## Before a live run
+
+You need LE access and suitable System Access Token permissions, working application and continuous tests, launchers/accounts/connectors, a disposable Windows target with independent recovery, trusted TLS, and PowerShell 5.1 or 7. The supplied mutation adapters need verified installers and target execution credentials. All callers must share durable target state and protect private evidence. GitHub Actions additionally needs a suitably isolated Windows runner and the documented secrets/environment controls.
+
+PowerShell, GitHub Actions, GitHub issues and JSON provide familiar building blocks that can be replaced through explicit contracts. LE licensing, runners and infrastructure have their own requirements and costs.
+
+Private capture can proceed after its operational prerequisites are met. The full manual demonstration also requires [authoritative approval-time evidence](docs/approval-evidence.md), which remains an external blocker. Bounded file delivery and matching fields do not prove authoritative provenance.
+
+Use [live acceptance](docs/live-acceptance.md) to assess readiness, [recovery](docs/runbook.md#recovery) for interrupted work, [security](docs/security.md) before sharing evidence, and [API notes](docs/api-notes.md) before changing API versions. [Architecture](docs/architecture.md) explains the components; [implementation progress](docs/implementation-progress.md) records verification status.

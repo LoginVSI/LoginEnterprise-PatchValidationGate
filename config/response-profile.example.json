@@ -1,7 +1,7 @@
 {
-  "profileVersion": "1",
-  "provenance": "synthetic",
-  "confirmedFrom": "Synthetic contract example only. Replace selectors after private capture review.",
+  "profileVersion": "2",
+  "provenance": "spec-derived",
+  "confirmedFrom": "docs/api/login-enterprise-v8-preview.openapi.json; not live-confirmed",
   "lists": {
     "sessions": {
       "envelope": "envelope",
@@ -18,15 +18,11 @@
     "measurements": {
       "envelope": "envelope",
       "arrayTerminationConfirmed": false
-    },
-    "screenshots": {
-      "envelope": "envelope",
-      "arrayTerminationConfirmed": false
     }
   },
   "selectors": {
-    "overviewApplications": "applications",
-    "overviewLogin": "platform.loginSuccessful",
+    "overviewApplications": "applicationSummaries",
+    "overviewLogin": "platformSummary.loginSuccessful",
     "overviewAppId": "applicationId",
     "sessionId": "id",
     "sessionRunId": "testRunId",
@@ -34,7 +30,9 @@
     "executionAppId": "applicationId",
     "executionSessionId": "userSessionId",
     "executionRunId": "testRunId",
-    "eventType": "type",
-    "screenshotId": "id"
+    "eventType": "eventType",
+    "screenshotId": "id",
+    "overviewRuns": "applicationTestResult",
+    "overviewRunId": "testRunId"
   }
 }

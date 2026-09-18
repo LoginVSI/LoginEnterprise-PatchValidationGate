@@ -8,20 +8,29 @@
     "appFailureResults": {
       "successCount": 2,
       "totalCount": 2
-    }
+    },
+    "testId": "test-1"
   },
   "overview": {
-    "platform": {
-      "loginSuccessful": true
-    },
-    "applications": [
+    "applicationTestResult": [
       {
-        "applicationId": "notepad",
-        "appExecutionSuccessful": true
-      },
-      {
-        "applicationId": "demo-app",
-        "appExecutionSuccessful": true
+        "testRunId": "synthetic-run",
+        "state": "completed",
+        "testResult": "successful",
+        "isBase": true,
+        "platformSummary": {
+          "loginSuccessful": true
+        },
+        "applicationSummaries": [
+          {
+            "applicationId": "notepad",
+            "appExecutionSuccessful": true
+          },
+          {
+            "applicationId": "demo-app",
+            "appExecutionSuccessful": true
+          }
+        ]
       }
     ]
   },

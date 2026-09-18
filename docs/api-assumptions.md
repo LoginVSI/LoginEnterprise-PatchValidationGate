@@ -1,19 +1,20 @@
-# API assumptions awaiting genuine captures
+# Specification facts and live acceptance gaps
 
-No matching OpenAPI file or genuine run captures are present locally. Use [api-notes.md](api-notes.md) for endpoints. Synthetic data demonstrates code behavior, not vendor response shapes.
+The reviewed [v8-preview snapshot](api/login-enterprise-v8-preview.openapi.json) establishes the contracts summarized in [API notes](api-notes.md). All local references have been resolved for review. This replaces the earlier absence of a local specification; genuine run captures are still pending.
 
-The response profile is a small set of dot selectors and list modes. The example is synthetic. Do not relabel it to pass preflight. A live profile needs provenance: capture-confirmed and confirmedFrom identifying reviewed private captures. This is an operator attestation, not automated proof.
+The example profile uses spec-derived selectors and envelopes. A live profile needs `provenance: capture-confirmed` and `confirmedFrom` identifying reviewed private captures. That is an operator attestation, not automated proof. Never change synthetic provenance to bypass preflight.
 
-| Unresolved detail | Capture required |
+| Spec-confirmed fact | Remaining capture/operational check |
 |---|---|
-| overviewApplications, overviewAppId, overviewLogin | Success/failure overview, documented appExecutionSuccessful, and comparison if used. |
-| sessionId, sessionRunId | All session pages with matching run and loginState. |
-| executionId, executionAppId, executionSessionId, executionRunId | Every session's executions, states, and relationships. |
-| List envelopes: sessions, executions, events, measurements, screenshots | Small-page request count/offset/includeTotalCount, response totals/offsets and final page. Notes describe arrays and totals. Envelope mode requires items/totalCount/offset. Array mode needs confirmed short-page termination, never a guess. |
-| eventType and infrastructure events | Login/session/launcher/connection failures plus cancelled/internal-error examples. |
-| screenshotId and binary response | Failed-execution list, download and matching execution. Missing screenshots make failure retrieval incomplete. |
-| appFailureResults counts and retry semantics | Overview and every execution alongside successful/failed run counts. Gate retry allowance remains zero. |
+| ApplicationTestResultOverview.applicationTestResult[] contains ApplicationTestData keyed by testRunId, with platformSummary and applicationSummaries. | Success/failure rows agree with run, login and application evidence; optional comparisons select the candidate correctly. |
+| UserSession and AppExecution declare run/session/application relationships and execution states. | Every page is visible to the token; completed workload coverage is consistent, including null/empty fields and retries. |
+| ResultSet envelopes contain items, nullable totalCount and offset. | includeTotalCount=true produces stable usable totals and exact offsets. Missing totals or changing pages remain INCONCLUSIVE. Do not substitute guessed termination. |
+| Event.eventType uses EventType; run/session/application relationships are nullable. | Confirm native failure and infrastructure examples. Supplied relationships must match; unknown/malformed types block complete evidence. Gate classification is our conservative policy, not a vendor severity field. |
+| Screenshot[] is unpaged, with nullable string IDs and created timestamps; download schema is binary despite application/json labeling. | Metadata, ID encoding, media type and nonempty bytes map to the correct failed execution. Missing screenshots remain incomplete under this gate's evidence requirements. |
+| ApplicationTestRun.appFailureResults uses SuccessCounts. | Validate conservative execution-count equality and the success denominator, including LE retry behavior. Schema descriptions do not prove aggregation semantics; gate retry allowance stays zero. |
+| ContinuousTest has isEnabled; active sessions expose testId; start returns ObjectId. | Verify token visibility, disabled scheduling plus drained sessions before mutation, start/readback timing and enabled scheduling after handoff. Enablement does not prove immediate workload execution. |
+| Security schemes include Bearer, OAuth2 and OpenID in one operation requirement object. | Confirm System Access Token authentication, effective read/start roles and TLS. API metadata does not establish an appliance version. |
 
-Capture tooling retains unexpected responses and errors. Without a usable profile, it saves partial evidence and exits 2. Inspect it, correct mappings from evidence, and recapture to a new directory.
+The [bootstrap procedure](first-live-capture.md) obtains baseline, controlled-failure and restored captures before gate use. Export preserves unexpected responses and errors. Without a usable profile it retains partial evidence and exits 2; correct the private draft from evidence and recapture into a new directory. Explicitly record cases not yet observed instead of declaring blanket acceptance.
 
-GitHub review history documents reviewer identity but no approval timestamp. [Authoritative acquisition](approval-evidence.md) remains externally blocked. Manual handoff checks repository/run/attempt/environment/reviewer and bounds file delivery, but matching fields do not establish provenance. The local time envelope is our contract, not a GitHub API field.
+GitHub [authoritative approval-time acquisition](approval-evidence.md) remains a separate external blocker. Review history supplies reviewer identity but no approval timestamp. Bounded delivery checks repository/run/attempt/environment/reviewer fields; matching files do not establish authoritative provenance.

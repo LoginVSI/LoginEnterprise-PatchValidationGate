@@ -13,18 +13,24 @@ function Get-LEGateRunScreenshot {
         $path = '/test-runs/{0}/app-executions/{1}/screenshots' -f $TestRunId, $id
         $folder = Resolve-LEGatePath -Root $CaptureRoot -RelativePath $id
         [IO.Directory]::CreateDirectory($folder) | Out-Null
-        $screenshots = @(Get-LEGateResultList -Session $Session -Path $path -Query @{ count = 100 } -ListProfile $ResponseMap.lists.screenshots -CaptureRoot $folder)
+        # Screenshot[] is an unpaged endpoint, unlike the other result sets.
+        $response = Invoke-LEGateRequest -Session $Session -Method GET -Path $path
+        Write-LEGateJson -Path (Join-Path $folder 'metadata.json') -Value $response
+        if ($null -eq $response -or $response -isnot [array]) { throw 'Screenshot metadata must be an array.' }
+        $screenshots = @($response)
         if ($screenshots.Count -eq 0) { throw 'Failed execution has no screenshot evidence.' }
         $seen = @{}
         foreach ($screenshot in $screenshots) {
-            $sid = [string](Get-LEGateField -Value $screenshot -Selector $ResponseMap.selectors.screenshotId)
-            Assert-LEGateIdentifier -Value $sid
+            $sid = Get-LEGateField -Value $screenshot -Selector $ResponseMap.selectors.screenshotId
+            if ($sid -isnot [string] -or [string]::IsNullOrWhiteSpace($sid)) { throw 'Screenshot identity is missing or malformed.' }
+            if ($sid -in @('.', '..')) { throw 'Screenshot identity cannot be a URI dot segment.' }
             if ($seen.ContainsKey($sid)) { throw 'Duplicate screenshot identity.' }
             $seen[$sid] = $true
-            $file = Resolve-LEGatePath -Root $folder -RelativePath ($sid + '.bin')
-            Invoke-LEGateRequest -Session $Session -Method GET -Path ($path + '/' + $sid) -OutFile $file | Out-Null
+            $fileName = (Get-LEGateTextHash -Text $sid) + '.bin'
+            $file = Resolve-LEGatePath -Root $folder -RelativePath $fileName
+            Invoke-LEGateRequest -Session $Session -Method GET -Path ($path + '/' + [Uri]::EscapeDataString($sid)) -OutFile $file | Out-Null
             if (-not (Test-Path -LiteralPath $file) -or (Get-Item -LiteralPath $file).Length -eq 0) { throw 'Screenshot download is empty.' }
-            [void]$records.Add([pscustomobject]@{ runId = $TestRunId; executionId = $id; screenshotId = $sid; path = $id + '/' + $sid + '.bin' })
+            [void]$records.Add([pscustomobject]@{ runId = $TestRunId; executionId = $id; screenshotId = $sid; path = $id + '/' + $fileName })
         }
     }
     return $records.ToArray()

@@ -44,7 +44,7 @@ try {
             $promotion.evidence.manifestSha256 -cne $checked.manifestSha256 -or $promotion.changeId -cne $checked.verdict.changeId) { throw 'Promotion does not match approved validation.' }
         $session = Connect-LEGate
         $handoff = Invoke-LEGateContinuousHandoff -Session $session -Name $ContinuousTestName -StateRoot $StateRoot -Target $Target -IdentityHash $checked.manifest.identityHash
-        $public = @{ succeeded = $handoff.succeeded; alreadyRunning = $handoff.alreadyRunning; simulatedProduction = $true; validationManifestSha256 = $checked.manifestSha256; recordedAt = Get-LEGateTimestamp }
+        $public = @{ succeeded = $handoff.succeeded; alreadyRunning = $handoff.alreadyRunning; schedulingEnabled = $handoff.schedulingEnabled; simulatedProduction = $true; validationManifestSha256 = $checked.manifestSha256; recordedAt = Get-LEGateTimestamp }
         [IO.File]::WriteAllText((Join-Path -Path $OutputPath -ChildPath 'continuous-record.json'), (ConvertTo-Json -InputObject $public -Depth 10), (New-Object Text.UTF8Encoding($false)))
         Add-LEGateChangeComment -IssueNumber $IssueNumber -Stage continuous -Outcome succeeded
         Close-LEGateChangeIssue -IssueNumber $IssueNumber -Handoff $handoff

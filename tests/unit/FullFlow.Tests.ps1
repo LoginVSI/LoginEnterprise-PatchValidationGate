@@ -40,11 +40,16 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
                 switch ($path) {
                     '/publicApi/v8-preview/system/version' { return [pscustomobject]@{ currentVersion = 'synthetic' } }
                     '/publicApi/v8-preview/tests' {
-                        if ($query.testType -eq 'continuousTest') { return New-LEGatePage -Items @([pscustomobject]@{ id = 'continuous-1'; name = 'patch-gate-continuous'; state = $state.continuousState }) -TotalCount 1 }
+                        if ($query.testType -eq 'continuousTest') { return New-LEGatePage -Items @([pscustomobject]@{ id = 'continuous-1'; name = 'patch-gate-continuous'; isEnabled = $state.continuousEnabled }) -TotalCount 1 }
                         if ($query.testType -ne 'applicationTest') { throw 'Unexpected test type.' }
                         return New-LEGatePage -Items @([pscustomobject]@{ id = 'test-1'; name = 'patch-gate-app'; state = 'enabled' }) -TotalCount 1
                     }
                     '/publicApi/v8-preview/tests/test-1/test-runs' { return New-LEGatePage }
+                    '/publicApi/v8-preview/user-sessions/active' {
+                        if ($state.mode -eq 'active-continuous') { return New-LEGatePage -Items @([pscustomobject]@{ testId = 'continuous-1'; id = 'active-1' }) -TotalCount 1 }
+                        return New-LEGatePage
+                    }
+                    '/publicApi/v8-preview/tests/continuous-1' { return [pscustomobject]@{ id = 'continuous-1'; name = 'patch-gate-continuous'; isEnabled = $state.continuousEnabled } }
                     '/publicApi/v8-preview/tests/test-1/start' {
                         if ($Method -ne 'PUT' -or $bodyObject.testRunName -ne 'full-flow' -or $bodyObject.comment -notmatch '^identityHash=[a-f0-9]{64}$') { throw 'Invalid application start request.' }
                         return [pscustomobject]@{ id = 'synthetic-run' }
@@ -66,7 +71,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
                     '/publicApi/v8-preview/test-runs/synthetic-run/user-sessions/session-1/app-executions' { return New-LEGatePage -Items $state.capture.executions -TotalCount $state.capture.executions.Count }
                     '/publicApi/v8-preview/test-runs/synthetic-run/events' { return New-LEGatePage -Items $state.capture.events -TotalCount $state.capture.events.Count }
                     '/publicApi/v8-preview/test-runs/synthetic-run/measurements' { return New-LEGatePage }
-                    '/publicApi/v8-preview/test-runs/synthetic-run/app-executions/execution-2/screenshots' { return New-LEGatePage -Items @([pscustomobject]@{ id = 'shot-1' }) -TotalCount 1 }
+                    '/publicApi/v8-preview/test-runs/synthetic-run/app-executions/execution-2/screenshots' { return , @([pscustomobject]@{ id = 'shot-1' }) }
                     '/publicApi/v8-preview/test-runs/synthetic-run/app-executions/execution-2/screenshots/shot-1' {
                         if (-not $OutFile -or $Method -ne 'GET') { throw 'Screenshot must be binary GET.' }
                         [IO.File]::WriteAllBytes($OutFile, $png)
@@ -75,7 +80,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
                     '/publicApi/v8-preview/tests/continuous-1/start' {
                         if ($Method -ne 'PUT') { throw 'Wrong continuous method.' }
                         if ($state.mode -eq 'continuous-error') { throw 'Synthetic continuous error.' }
-                        $state.continuousState = 'running'
+                        $state.continuousEnabled = $true
                         return [pscustomobject]@{ id = 'continuous-run' }
                     }
                     default { throw ('Unmatched synthetic LE request: ' + $Method + ' ' + $path) }
@@ -130,7 +135,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
     }
     BeforeEach {
         $calls.Clear(); $state.Clear()
-        $state.mode = 'pass'; $state.continuousState = 'enabled'; $state.polls = 0
+        $state.mode = 'pass'; $state.continuousEnabled = $false; $state.polls = 0
         $state.now = [DateTime]::Parse('2026-09-17T00:00:00Z').ToUniversalTime()
         $state.capture = Get-Content (Join-Path -Path $script:LEGateRepoRoot -ChildPath 'tests/synthetic/pass.json') -Raw | ConvertFrom-Json
         $caseRoot = Join-Path -Path $TestDrive -ChildPath ([guid]::NewGuid().ToString('N'))
@@ -197,7 +202,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         $result.exitCode | Should -Be 1
         $bundle = Test-LEGateEvidence -Path $result.privatePath
         @($bundle.manifest.files | Where-Object { $_.kind -eq 'screenshot' }).Count | Should -Be 1
-        $shot = Join-Path -Path $result.privatePath -ChildPath 'raw/screenshots/execution-2/shot-1.bin'
+        $shot = (Get-ChildItem (Join-Path $result.privatePath 'raw/screenshots/execution-2') -Filter '*.bin').FullName
         [Convert]::ToBase64String([IO.File]::ReadAllBytes($shot)) | Should -Be ([Convert]::ToBase64String($png))
         { Write-LEGatePromotionRecord -BundlePath $result.privatePath -ExpectedManifestHash $result.manifestSha256 -BundleName 'synthetic-validation' -Policy $policy -Mode manual -Synthetic } | Should -Throw '*PASS*'
         @($calls | Where-Object { $_.path -eq '/publicApi/v8-preview/tests/continuous-1/start' }).Count | Should -Be 0
@@ -214,10 +219,10 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         @($calls | Where-Object { $_.path -eq '/publicApi/v8-preview/tests/continuous-1/start' }).Count | Should -Be 0
     }
     It 'treats infrastructure and malformed results as inconclusive' {
-        $state.capture.events = @([pscustomobject]@{ type = 'launcherOffline' })
+        $state.capture.events = @([pscustomobject]@{ eventType = 'launcherOffline' })
         (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'INCONCLUSIVE'
         $gateArgs.StateRoot = Join-Path -Path $caseRoot -ChildPath 'another-state'
-        $state.capture.events = @(); $state.capture.overview.applications[0].appExecutionSuccessful = $null
+        $state.capture.events = @(); $state.capture.overview.applicationTestResult[0].applicationSummaries[0].appExecutionSuccessful = $null
         (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'INCONCLUSIVE'
     }
     It 'blocks cancelled, internal-error and wrong-run evidence' {
@@ -271,6 +276,14 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'INCONCLUSIVE'
         @($calls | Where-Object { $_.method -eq 'REMOTE' }).Count | Should -Be 0
         { Get-LEGateApproval -WorkflowRunId '123' } | Should -Throw '*time provenance unavailable*'
+    }
+    It 'blocks mutation while continuous scheduling is enabled or sessions are still draining' {
+        $state.continuousEnabled = $true
+        (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'INCONCLUSIVE'
+        $state.continuousEnabled = $false
+        $state.mode = 'active-continuous'
+        (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'INCONCLUSIVE'
+        @($calls | Where-Object { $_.method -eq 'REMOTE' -or $_.method -eq 'PUT' }).Count | Should -Be 0
     }
     It 'blocks reuse and both handoffs after failed, interrupted and successful restoration' {
         foreach ($stage in @('failed', 'interrupted', 'successful')) {

@@ -61,7 +61,13 @@ function Invoke-LEGateValidation {
         }
         elseif ($Resume -or $Revert) { throw 'No durable identity exists to resume or revert.' }
         $continuous = Resolve-LEGateContinuousTest -Session $session -Name $ContinuousTestName
-        if ($continuous.state -ne 'enabled') { throw 'Stop shared-target continuous testing in LE and wait for enabled state.' }
+        Assert-LEGateIdentifier -Value ([string]$continuous.id)
+        if ($continuous.isEnabled -isnot [bool] -or $continuous.isEnabled) { throw 'Disable shared-target continuous scheduling in LE before mutation.' }
+        $active = @(Get-LEGateAllPages -Session $session -Path '/user-sessions/active' -Query @{ count = 100; testTypes = 'continuousTest'; direction = 'asc' })
+        foreach ($activeSession in $active) {
+            if ($activeSession.testId -isnot [string] -or [string]::IsNullOrWhiteSpace($activeSession.testId)) { throw 'Active session test identity unavailable.' }
+            if ($activeSession.testId -ceq $continuous.id) { throw 'Wait for shared-target continuous sessions to drain before mutation.' }
+        }
         $adapterArgs = @{ Adapter = $Adapter; ChangeId = $ChangeId; Target = $Target; Parameters = $manifest; UseCurrentCredentials = $UseCurrentCredentials; Local = $Local }
         if ($Credential) { $adapterArgs.Credential = $Credential }
         if ($Revert) {
@@ -130,7 +136,7 @@ function Invoke-LEGateValidation {
         }
         $context.testRunId = $state.runId
         $run = Invoke-LEGateRequest -Session $session -Method GET -Path ('/test-runs/' + $state.runId)
-        if ($run.id -cne $state.runId -or $run.testRunName -cne $ChangeId) { throw 'Persisted run identity mismatch.' }
+        if ($run.id -cne $state.runId -or $run.testId -cne $test.id -or $run.testRunName -cne $ChangeId) { throw 'Persisted run identity mismatch.' }
         $stage = 'poll'
         $waited = Wait-LEGateRun -Session $session -TestRunId $state.runId -ChangeId $ChangeId -EvidenceRoot (Join-Path -Path $folder -ChildPath 'poll') -PollIntervalSeconds $policy.execution.pollIntervalSeconds -MaxWaitMinutes $policy.execution.maxWaitMinutes
         $stage = 'retrieve'

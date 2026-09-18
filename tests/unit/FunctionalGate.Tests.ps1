@@ -31,15 +31,15 @@ Describe 'Functional gate and evidence boundaries' {
     It 'makes every malformed event type inconclusive while retaining valid event handling' {
         $cases = @(@{ value = $null }, @{ value = '' }, @{ value = ' ' }, @{ value = @('launcherOffline') }, @{ value = @() }, @{ value = @{ name = 'launcherOffline' } }, @{ value = 1 }, @{ value = $true })
         foreach ($case in $cases) {
-            $capture.events = @([pscustomobject]@{ type = $case.value })
+            $capture.events = @([pscustomobject]@{ eventType = $case.value })
             $normalized = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
             $normalized.complete | Should -BeFalse
             (Test-LEGatePolicy -Results $normalized -Policy $policy -Context $context).verdict | Should -Be 'INCONCLUSIVE'
         }
-        $capture.events = @([pscustomobject]@{ type = 'testRunFinished' })
+        $capture.events = @([pscustomobject]@{ eventType = 'testRunFinished' })
         $normalized = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
         (Test-LEGatePolicy -Results $normalized -Policy $policy -Context $context).verdict | Should -Be 'PASS'
-        $capture.events = @([pscustomobject]@{ type = 'launcherOffline' })
+        $capture.events = @([pscustomobject]@{ eventType = 'launcherOffline' })
         $normalized = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
         (Test-LEGatePolicy -Results $normalized -Policy $policy -Context $context).verdict | Should -Be 'INCONCLUSIVE'
     }
@@ -56,7 +56,7 @@ Describe 'Functional gate and evidence boundaries' {
         $capture.run.appFailureResults.totalCount = 0
         $n = ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run'
         (Test-LEGatePolicy -Results $n -Policy $policy -Context $context).verdict | Should -Be 'INCONCLUSIVE'
-        $capture.overview.applications = @()
+        $capture.overview.applicationTestResult[0].applicationSummaries = @()
         (ConvertTo-LEGateResult -Capture $capture -ResponseMap $ResponseMap -TestRunId 'synthetic-run').integrityValid | Should -BeFalse
     }
     It 'does not infer missing required coverage' {

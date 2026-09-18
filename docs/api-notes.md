@@ -1,54 +1,50 @@
 # Login Enterprise Public API notes
 
-Source of truth: the OpenAPI spec exported from the appliance. Nothing here comes from other documentation.
+The reviewed [v8-preview snapshot](api/login-enterprise-v8-preview.openapi.json) is the implementation target. All paths below are relative to its `/publicApi` server and `/v8-preview` path prefix. Connect-LEGate accepts an HTTPS origin only; Invoke-LEGateRequest appends both prefixes exactly once. API selection is explicit through LE_API_VERSION or -ApiVersion, never automatic.
 
-Appliance version: Login Enterprise 6.8.6
-Spec exported: v8-preview (OpenAPI 3.0.1, base path `/publicApi`)
-Target for the reference implementation: **v8-preview**, pinned as a config value. The spec header calls v7 the recommended version and v8-preview subject to breaking changes, so this was checked against the v7 export from the same appliance. v7 lacks three things the gate wants: the application test run overview with base-run comparison (`/application-test-run-overview`), `testRunName` on the start request (used to tag a run with the change id for idempotency), and `eventTypes` filtering on run events. v8-preview has shipped in every release since 6.0. The wrapper reads the API version from config so a move back to v7 is a one-line change plus dropping those three features.
+The [v7 snapshot](api/login-enterprise-v7.openapi.json) is a comparison reference. Both snapshots declare OpenAPI 3.0.1. They establish API versions, not the exporting appliance version or date. A historical version-call check against LE 6.8.6 does not establish full gate compatibility. See [snapshot provenance](api/README.md).
 
-## Authentication
+## Authentication and request contracts
 
-Header `Authorization: Bearer {token}` where the token is a System Access Token created in the appliance (scheme name `Bearer`, type apiKey, header `Authorization`). OAuth2 client credentials and OpenID Connect are also declared but the reference uses the system access token. Create the token with a role limited to reading tests and test runs and starting tests; nothing else in this repo needs write access beyond `start`.
+The implementation sends a System Access Token as `Authorization: Bearer {token}` over trusted HTTPS. `components/securitySchemes/Bearer` declares an Authorization-header apiKey. OAuth2 and OpenID Connect are also declared. Every exported operation puts all three in one security requirement object; that export is preserved, not rewritten as an authentication compatibility claim. Token-only access, effective roles and permissions must be checked on the intended appliance. Grant reads for the listed resources and start permission for the existing tests, with no unrelated administrative writes.
 
-## Endpoints the gate uses
+## Used endpoints and schemas
 
-| Need | Method and path | What comes back | Notes |
-|---|---|---|---|
-| Sanity check / version | `GET /system/version` | `currentVersion`, `latestVersion` | First real call. Also recorded in the evidence manifest. |
-| Resolve test by name | `GET /tests?testType=applicationTest&filter={name}&count=50` | `TestResultSet { items[], totalCount, offset }` | `filter` matches name or description, so match `name` exactly client-side. Refuse to proceed on zero or more than one exact match. |
-| Read test | `GET /tests/{testId}?include=thresholds` | `ApplicationTest` | `state` is `disabled`, `enabled`, `running`, or `stopping`. Preflight requires `enabled`. `appThresholds` and `sessionThresholds` (loginTime, latency) are the appliance's own thresholds. |
-| Start test | `PUT /tests/{testId}/start` body `StartRequest { comment, testRunName }` | `201 ObjectId { id }` = the test run id | 409 when the test can't be started (already running or disabled). Put the change id in `testRunName` and the durable identity hash in `comment`. |
-| Existing runs (idempotency) | `GET /tests/{testId}/test-runs?count=20&orderBy=created&direction=desc` | `TestRunResultSet` | Refuse an existing matching name without durable identity; resume uses the locally persisted run ID. |
-| Poll run | `GET /test-runs/{testRunId}` | `ApplicationTestRun` | `state`: `created` → `testRunEnded` → `completed`. Poll until `completed`. `result`: `successful`, `internalError`, `cancelled`, `incomplete`. `appFailureResults` and `appPerformanceResults` are `{ successCount, totalCount }`. |
-| Run overview (with optional compare) | `GET /application-test-run-overview/{baseTestRunId}?testRunIds=...` | `ApplicationTestResultOverview` | Per application: `resultStatus` (`successful`, `overThreshold`, `error`), `appExecutionSuccessful`, `performanceSuccessful`, timer results, screenshots. Platform: `loginSuccessful`, login and latency performance. Pass a baseline run id in `testRunIds` and the appliance does the comparison. |
-| Sessions | `GET /test-runs/{testRunId}/user-sessions?direction=asc&count=100` | `UserSession[]` | `loginState` (`succeeded`, `failed`, ...) and `sessionState`. |
-| App executions | `GET /test-runs/{testRunId}/user-sessions/{userSessionId}/app-executions?direction=asc&count=200` | `AppExecution[]` | `state`: `created`, `ended`, `endedWithErrors`. |
-| Measurements | `GET /test-runs/{testRunId}/measurements?direction=asc&count=1000&include=all` | `Measurement[]` | `duration`, `timestamp`, `applicationId`, `appExecutionId`. Raw evidence, not evaluated in the MVP. |
-| Events | `GET /test-runs/{testRunId}/events?count=500&direction=asc` | `Event[]` | Filter with `eventTypes`. Useful ones: `applicationFailure`, `loginFailure`, `sessionFailure`, `launcherOffline`, `connectionInitializationTimeout`, `applicationThresholdExceeded`, `loginTimeThresholdExceeded`, `testRunFailed`, `testRunCancelled`, `testRunFinished`. |
-| Screenshots | `GET /test-runs/{testRunId}/app-executions/{appExecutionId}/screenshots` then `.../screenshots/{screenshotId}` | list, then binary | Pull only for executions in `endedWithErrors`. |
-| Report | `GET /test-runs/{testRunId}/reports` and `/reports/pdf` | `ApplicationTestReport`, PDF | Optional attachment for the evidence bundle. |
-| Continuous test handoff | `GET /tests?testType=continuousTest`, `PUT /tests/{testId}/start` | | Same start call; the continuous test must already exist. Included in Part 2. |
+Each row names a path under `paths` in the v8-preview snapshot. Referenced schemas live under `components/schemas`.
 
-Paging: every list takes `count` (required), `offset`, `includeTotalCount`. Walk pages until `offset + items.length >= totalCount`.
+| Operation | Response/parameters and implementation rule |
+|---|---|
+| GET /system/version | SystemVersionResult.currentVersion/latestVersion. A real response establishes the observed version. |
+| GET /tests | TestResultSet; required count, optional offset/includeTotalCount, testType, filter, direction/orderBy/include. Exact client-side name matching. The filter description limits it to application/load tests; continuous resolution omits filter and pages all continuous candidates. |
+| GET /tests/{testId} | ApplicationTest/LoadTest/ContinuousTest union. Optional include is an array of TestInclude values, including thresholds. ApplicationTest.state uses TestControlState. ContinuousTest instead has boolean isEnabled; no state property is declared. |
+| PUT /tests/{testId}/start | Required StartRequest JSON (nullable comment and testRunName); 201 ObjectId.id; 409 conflict. Writes are never retried. |
+| GET /tests/{testId}/test-runs | TestRunResultSet; required count. TestRunSortKey includes created; direction desc supported. Existing named runs cannot replace durable identity. |
+| GET /test-runs/{testRunId} | ApplicationTestRun inherits TestRun.id/testId/testRunName. ApplicationTestState: created, testRunEnded, completed. ApplicationTestResult: successful, internalError, cancelled, incomplete. Only completed successful results can proceed to functional evaluation. |
+| GET /application-test-run-overview/{baseTestRunId} | ApplicationTestResultOverview.applicationTestResult[] contains ApplicationTestData rows keyed by testRunId. Each has state, testResult, isBase, platformSummary.loginSuccessful and applicationSummaries[]. Select exactly one row for the candidate run. With a baseline, put the baseline in the path and candidate in testRunIds; never evaluate the baseline row as the candidate. |
+| GET /test-runs/{testRunId}/user-sessions | UserSessionResultSet. Required direction and count. UserSession.id/testRunId and loginState establish membership/login evidence. |
+| GET /test-runs/{testRunId}/user-sessions/{userSessionId}/app-executions | AppExecutionResultSet. Required direction and count. AppExecution.id/testRunId/userSessionId/applicationId and state (created, ended, endedWithErrors). Cross-check all relationships. |
+| GET /test-runs/{testRunId}/events | EventResultSet; required count. Event.eventType refers to EventType; optional eventTypes query refers to EventTypes. Retrieve all events rather than filtering away failures. Event.testRunId/userSessionId/applicationId are nullable. Supplied relationships must match collected evidence. |
+| GET /test-runs/{testRunId}/measurements | MeasurementResultSet; required direction/count; include=all is a valid MeasurementInclude value. Retained but not used for performance policy. |
+| GET /test-runs/{testRunId}/app-executions/{appExecutionId}/screenshots | Unpaged Screenshot[] with string id and created. No count/offset/includeTotalCount parameters. Fetch once and require an array, then download each failed execution's screenshot. |
+| GET /test-runs/{testRunId}/app-executions/{appExecutionId}/screenshots/{screenshotId} | Binary string schema. The export labels it application/json; retain downloaded bytes without JSON decoding. Actual media type/content and ID syntax need capture confirmation. |
+| GET /user-sessions/active | ActiveUserSessionResultSet; required count, optional testTypes/direction. Read continuous sessions and match testId client-side before mutation; disabled scheduling alone is not proof of drained sessions. |
 
-## How the run maps to a verdict
+Continuous handoff uses the same existing-test start endpoint, checks the returned ID and reads the test again to confirm isEnabled. This confirms enabled scheduling, not that a workload session is already running or that future iterations will pass. If enablement cannot be observed, handoff fails closed and requires investigation before retrying. No stop/disable endpoint is implemented; operators use the LE UI.
 
-- `result` = `internalError` or `cancelled` → INCONCLUSIVE (`launcher-or-connection-error` or `results-incomplete`, decided by events)
-- `result` = `incomplete` → INCONCLUSIVE (`results-incomplete`)
-- `result` = `successful` → evaluate: required applications present in the overview, every one with `appExecutionSuccessful` true, `appFailureResults.successCount == totalCount`, `loginSuccessful` true → PASS, otherwise FAIL
-- `state` never reaches `completed` inside `maxWaitMinutes` → INCONCLUSIVE (`run-timeout`)
-- Events of type `launcherOffline` or `connectionInitializationTimeout` on the run → INCONCLUSIVE regardless of `result`
+## Completeness and Events
 
-The appliance's own thresholds (`overThreshold`, `applicationThresholdExceeded`, `loginTimeThresholdExceeded`) are recorded as evidence in the MVP and not used for the verdict until the performance policy is enabled.
+TestResultSet, TestRunResultSet, UserSessionResultSet, AppExecutionResultSet, EventResultSet, MeasurementResultSet and ActiveUserSessionResultSet declare items[], nullable totalCount and offset. Request includeTotalCount=true; reject absent/changing totals, wrong offsets, oversize/premature empty pages and page-limit exhaustion. Screenshot[] is a separate unpaged contract, not a paged array termination guess.
 
-## Not used
+ApplicationSummary contains applicationId and appExecutionSuccessful. The gate requires positive execution coverage, no contradictory overview/execution results, and consistent appFailureResults counts. SuccessCounts is reused for failure/performance fields and its description does not establish aggregation/retry semantics. The current conservative count equality remains a live acceptance requirement rather than a vendor guarantee.
 
-Load test, continuous-test report configuration, EUX, session metrics, platform metrics, accounts, launchers, roles. `POST /test-runs/application-failures/details` (per-app failure details across runs) is v8-preview and worth revisiting once v7 is confirmed.
+Event.eventType is a nonempty scalar string. Known infrastructure, capacity, session, cancellation and evidence-loss events prevent PASS. Unknown types are incomplete evidence pending review. applicationFailure must agree with a collected failed execution; otherwise evidence is contradictory. Native Events are LE observations, not gate verdicts or GitHub issues. Performance threshold events remain evidence only. A failed application does not establish that the change caused it.
 
-## Implementation and capture caveats
+## Version comparison and upgrades
 
-The preceding endpoint inventory is the historical transcription of the exported spec; the matching export itself is not in this repository. Nested field selectors and list envelopes are not live-verified. See [api-assumptions.md](api-assumptions.md) for the single capture checklist. A v7 switch requires revalidation, not merely changing a string.
+v7 **does** contain application overview and comparison: `/v7/application-test-run-overview/{testRunId}` with testRunIds. Its StartRequest lacks testRunName. Its run-events endpoint lacks the v8-preview orderBy and eventTypes query parameters; no v7 compatibility is claimed. Changing the API version string cannot translate these contracts.
 
-Strict pagination rejects missing totals, inconsistent offsets, premature termination and page-limit exhaustion in envelope mode. Array termination is allowed only through an explicitly capture-confirmed profile. An empty/malformed overview cannot pass. The evaluator requires positive execution coverage and consistent relationships; infrastructure/evidence errors take precedence.
+Response profile version 2 adds overviewRuns/overviewRunId, selects fields within the matched row, uses eventType and removes screenshot paging configuration. Existing private profiles need review against these selectors and new genuine captures. Do not edit profile bytes beneath an active lease: restore/recover with its original inputs first, then use a fresh change identity. Preserve the original release/configuration if needed for that recovery.
 
-GitHub calls use official [workflow review history](https://docs.github.com/en/rest/actions/workflow-runs#get-the-review-history-for-a-workflow-run), [issues](https://docs.github.com/en/rest/issues/issues) and [comments](https://docs.github.com/en/rest/issues/comments) contracts. Review history identifies user.login but documents no approval timestamp. No environment timestamp is substituted.
+Before selecting a later version, privately export its matching spec, review paths/authentication/parameters/enums/compositions/paging and binary responses against this inventory, adapt mappings and code where supported, and run offline contract regressions plus genuine success/failure/restore acceptance. A spec-derived profile is a starting point, not capture-confirmed provenance. See [remaining assumptions](api-assumptions.md).
+
+GitHub approval-time acquisition remains independently blocked as described in [approval evidence](approval-evidence.md). Neither the LE spec nor bounded approval-file delivery resolves that prerequisite.

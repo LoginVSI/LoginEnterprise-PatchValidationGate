@@ -4,7 +4,7 @@ This is a reference implementation, so clarity beats cleverness. Someone should 
 
 ## Before you start
 
-Read `README.md`, `docs/architecture.md`, `docs/verdict.md`, and `docs/api-notes.md`. The API notes are the only source for endpoint paths, parameters, and response shapes. If you need an endpoint the notes do not list, add it to the notes first, from the appliance OpenAPI spec, in its own commit.
+Read `README.md`, `docs/architecture.md`, `docs/verdict.md`, and `docs/api-notes.md`. The API notes summarize the reviewed OpenAPI snapshot. Update them from that source before adding endpoint calls; keep capture-only uncertainty explicit.
 
 ## Branches
 
@@ -50,11 +50,33 @@ Run everything before you push:
 
 No genuine fixtures are committed yet. `tests/fixtures/` is reserved for reviewed real captures; `tests/synthetic/` holds labeled synthetic inputs. The naming and sanitization rules are in `tests/fixtures/README.md`. In short: no hostnames, no account names, no tokens; review identifying IDs too; keep the shape exactly as the appliance sent it.
 
-To capture one, run the call through the module with `LE_BASE_URL` and `LE_API_TOKEN` set, save the raw object with `ConvertTo-Json -Depth 20`, sanitize by hand, and read the entire file one more time before you commit it. Reviewers should read fixture diffs line by line for the same reason.
+Use the [private capture bootstrap](first-live-capture.md) and exporter, which retain page traces and binary evidence. Review sanitized copies separately from originals before proposing any public fixture. Reviewers should inspect fixture diffs line by line.
+
+## Development environment and checks
+
+User scenarios need no development dependencies. Contributors need Pester 5 and PSScriptAnalyzer in both supported shells. Inspect existing installations with `Get-Module -ListAvailable Pester,PSScriptAnalyzer`; use `scripts/Initialize-DevEnvironment.ps1` under your approved installation policy if needed. PS7 lint can discover an existing WindowsPowerShell user installation. Do not weaken organizational execution policy.
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File tests/Invoke-Tests.ps1 -Output Normal
+powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File scripts/Invoke-Lint.ps1
+pwsh -NoProfile -File tests/Invoke-Tests.ps1 -Output Normal
+pwsh -NoProfile -File scripts/Invoke-Lint.ps1
+```
+
+Pester uses temporary files and registry entries. Private NUnit XML and count summaries go to ignored `tests/results/`; CI publishes count summaries only. Run the synthetic scenario in both shells and inspect its built-in bundle verification. Keep all generated outputs ignored.
+
+Static workflow/skill checks require Python and PyYAML. If not already installed, the following uses an ignored local dependency directory:
+
+```powershell
+py -m pip install --target .private/python PyYAML==6.0.3
+py scripts/Test-RepositoryArtifacts.py
+```
+
+These checks validate YAML, action pins, orchestration guards and skill example hashes. They neither execute Actions nor prove model compliance. The reviewed OpenAPI files are static references and test inputs, not runtime dependencies. Keep their sanitized provenance intact.
 
 ## Docs
 
-Docs are written for a person. Short sentences, plain words, no em dashes, no bullet walls where a sentence does the job. If a doc and the code disagree, fix whichever one is wrong in the same pull request.
+Keep customer instructions consistent with script parameters and provide expected outcomes. If documentation and code disagree, correct them together. Separate observed results from synthetic examples and spec-derived facts.
 
 `CHANGELOG.md` follows Keep a Changelog. Add a line under Unreleased for anything a user of the module would notice.
 

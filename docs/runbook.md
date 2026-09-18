@@ -2,17 +2,17 @@
 
 ## Offline checks
 
-Run scripts/Invoke-OfflineScenario.ps1, tests/Invoke-Tests.ps1 and scripts/Invoke-Lint.ps1 in each available shell as shown in [setup](setup.md). FullFlow.Tests exercises real orchestration, collectors, normalization, evaluator, exporter, publication, approval parser and handoff while replacing external HTTP/remoting boundaries. Synthetic examples alone are narrower than these tests.
+Try scripts/Invoke-OfflineScenario.ps1 as shown in [user setup](setup.md). Contributors run the full suites and lint in both shells using [contributor instructions](contributing.md). FullFlow.Tests exercises real orchestration, collectors, normalization, evaluator, exporter, publication, approval parser and handoff while replacing external HTTP/remoting boundaries. Synthetic examples alone are narrower than these tests.
 
 ## Configure the disposable lab
 
 1. Create/configure existing LE tests named patch-gate-app and patch-gate-continuous. Both must exercise Notepad and the selected demo application with a visible action. The gate does not create tests.
-2. Stop continuous testing in the LE UI and wait for enabled/idle state. No stop endpoint is implemented.
+2. Disable continuous scheduling in the LE UI and wait until its active sessions have drained. The gate requires isEnabled=false and no active sessions for that continuous test. No stop endpoint is implemented; keep unrelated tests/operators off the reserved target too.
 3. Prepare a restorable target with the initial pinned MSI version in C:\LEGateDemo\<application>. Workloads must launch that exact executable. The adapter only supports its validated demo-app path and executable.
 4. Copy policies/default.policy.json to policies/demo.local.json, examples/changes/app-update.json to examples/changes/demo.local.json, and the response profile example to config/response-profile.local.json. Configure real application IDs, both MSI versions, HTTPS URLs, SHA-256 checksums, product codes, MSI directory property and observed file versions. Verify these privately from the actual installers. Placeholders are rejected.
 5. Follow [first private capture and restoration](first-live-capture.md) to bootstrap genuine success/failure responses before invoking the gate. It includes exclusive ownership, independent recovery, LE UI steps, draft mappings, adapter commands and verification. Do not change synthetic provenance merely to bypass preflight. See [API assumptions](api-assumptions.md).
 
-Use trusted appliance TLS. Set LE_BASE_URL, LE_API_TOKEN, LE_TARGET, LE_STATE_ROOT and LE_PRIVATE_ROOT privately. LE_API_VERSION optionally overrides v8-preview; revalidate the documented endpoints before changing it. State/evidence directories must be access-controlled, outside checkout for workflows, and shared consistently by all callers. Supply PSCredential for remote execution or explicitly choose -UseCurrentCredentials. Add -Local only for deliberate execution on the target itself. Credentials are never manifest inputs.
+Use trusted appliance TLS. Set LE_BASE_URL, LE_API_TOKEN, LE_TARGET, LE_STATE_ROOT and LE_PRIVATE_ROOT privately. Set LE_API_VERSION explicitly to v8-preview; follow [version assessment](api-notes.md#version-comparison-and-upgrades) before changing it. State/evidence directories must be access-controlled, outside checkout for workflows, and shared consistently by all callers. Supply PSCredential for remote execution or explicitly choose -UseCurrentCredentials. Add -Local only for deliberate execution on the target itself. Credentials are never manifest inputs.
 
 ## Capture an existing run
 
@@ -33,7 +33,7 @@ $credential = Get-Credential
 .\scripts\Invoke-Gate.ps1 -ChangeId <fresh-id> -PolicyFile policies/demo.local.json -ChangeManifest examples/changes/demo.local.json -ResponseProfile config/response-profile.local.json -Adapter app-update -Credential $credential
 ```
 
-Use -Adapter break for the deliberate failure demonstration. It renames only the selected demo executable after establishing the desired version. Verify means the intended broken state exists, so LE can observe failure. It does not break login or launcher components. Noop is available with examples/changes/noop.json.
+Use -Adapter break for the deliberate failure demonstration. It renames only the selected demo executable after establishing the desired version. Verify means the intended broken state exists, so LE can observe failure. It does not break login or launcher components. Noop is available with examples/changes/noop.json for externally changed targets, but it does not verify installation or restore the external change. See [external-change integration](portability.md#existing-external-changes).
 
 The script exits 0 PASS, 1 FAIL, 2 INCONCLUSIVE or orchestration/reporting failure. Smoke exits remain separate: 0 successful smoke/completed successful run, 1 request/start error, 2 timeout, 3 completed non-success. Smoke success is not gate PASS. Add -ReportIssue with explicit GITHUB_TOKEN and GITHUB_REPOSITORY only when authorized to post. Add -PublicationPath pointing to a new directory to create a sanitized projection. Review it before sharing.
 
@@ -61,10 +61,10 @@ Manual mode uses protected promotion-approval. GET review history supplies the a
 
 The protected job waits at most 120 seconds for atomic delivery to LE_APPROVAL_TIME_EVIDENCE, then requires matching repository, workflowRunId, workflowRunAttempt, environment and reviewer. The file must also contain kind github-approval-time-evidence, an actual approvedAt (UTC Z), and source (GitHub URL). Delivery alone, matching fields or a URL do not establish authoritative provenance. Preserve the underlying source privately. Missing, malformed, stale or ambiguous evidence fails closed. Never use environment created_at/updated_at, observation time or GITHUB_ACTOR as substitutes.
 
-Auto mode records policy as approver after both supported guardrails. Unknown guardrails block it. Promotion is simulated in both modes. The issue closes only after continuous handoff and required reporting succeed.
+Auto mode records policy as approver after both supported guardrails. Unknown guardrails block it. Promotion is simulated in both modes. The issue closes only after continuous handoff and required reporting succeed. Handoff confirms isEnabled=true on readback, not a completed workload session. If enablement is not observed, investigate before retrying; a start request is never blindly retried.
 
 Both promotion jobs now require LE_STATE_ROOT and LE_TARGET. Promotion holds the shared target lock while checking the exact validation identity and reusable state and writing the record. It releases that lock before continuous handoff acquires it independently and rechecks state. A restoration between those stages prevents continuous start; the earlier promotion record remains a historical event, not current authorization to start.
 
 ## Evidence explainer
 
-Codex discovers the repository skill at [.agents/skills/evidence-explainer/SKILL.md](../.agents/skills/evidence-explainer/SKILL.md). Claude users can load the same file explicitly. Give the agent an evidence path and a trusted manifest hash if available. The skill reports the recorded verdict, cites exact fields, distinguishes handoff and synthetic provenance, and suggests investigation without claiming root cause. It cannot execute the pipeline. Worked examples and an adversarial text fixture remain alongside the skill. Structural checks do not establish actual discovery or model compliance.
+Use [Explain existing evidence](explain-evidence.md) for Codex discovery, explicit Claude loading and copy/paste prompts. The skill stays read-only; structural checks do not establish model compliance.

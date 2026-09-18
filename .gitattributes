@@ -2,6 +2,8 @@
 *.ps1 text eol=crlf
 *.psm1 text eol=crlf
 *.psd1 text eol=crlf
+# Preserve reviewed OpenAPI snapshot bytes across checkouts.
+docs/api/*.openapi.json -text whitespace=cr-at-eol
 # Evidence hashes cover exact bytes. Do not normalize worked-example bundles.
 .agents/skills/evidence-explainer/examples/pass/** -text whitespace=cr-at-eol
 .agents/skills/evidence-explainer/examples/fail/** -text whitespace=cr-at-eol

@@ -2,7 +2,7 @@
 
 Three boundaries where something outside this repo plugs in. Each is a plain JSON shape with no dependency on a particular vendor. The point is that Intune, ConfigMgr, Autopatch, a Citrix or Omnissa image pipeline, or ServiceNow can sit on either side of the gate without the gate knowing which one it is.
 
-These boundaries are implemented for the reference lab. Production deployment remains simulated.
+These boundaries are implemented for the reference lab. Production deployment remains simulated. JSON examples below are illustrative, not recorded live results; their versions and timestamps do not establish acceptance.
 
 All timestamps are UTC ISO 8601 with millisecond precision and a `Z` suffix, for example `2026-09-11T20:30:15.250Z`. All ids are strings. Unknown fields must be ignored by readers and preserved by anything that copies a document.
 
@@ -207,3 +207,5 @@ Publication is a deliberate projection exception to unknown-field preservation: 
 Promotion adds simulated: true, provenance and approval provenance. Manual time evidence is a separate operator-supplied authoritative capture, checked against repository/run/attempt/environment and the GitHub reviewer. The approval projection includes workflowRunAttempt. Acquisition is still blocked as described in approval-evidence.md; matching fields alone cannot prove provenance. The private approval capture is retained; the published record carries its time-evidence hash. Auto approval records policy. Synthetic simulation is explicitly flagged and cannot enter the live workflow.
 
 Later promotion, continuous, restoration and handoff-error records are separate from immutable validation. Continuous records link validationManifestSha256. The workflow passes both validation and promotion hashes independently between jobs. Reporting/handoff failure does not rewrite verdict.json. Restore failure requires recovery even if the original validation passed.
+
+Continuous handoff records now include schedulingEnabled. The legacy alreadyRunning field means scheduling was already enabled when checked; neither field proves an active or successful workload session. The internal continuous-running lease stage records handoff completion with the same limitation. Production integration extensions must verify genuine deployment success before handoff and cannot reuse simulated promotion as that proof.

@@ -16,10 +16,20 @@ function ConvertTo-LEGateResult {
         if ($run.id -cne $TestRunId) { throw 'Wrong run ID.' }
         $normalized.state = $run.state
         $normalized.result = $run.result
-        $login = Get-LEGateField -Value $Capture.overview -Selector $ResponseMap.selectors.overviewLogin
+        $overviewRuns = Get-LEGateField -Value $Capture.overview -Selector $ResponseMap.selectors.overviewRuns
+        if ($overviewRuns -isnot [array] -or $overviewRuns.Count -eq 0) { throw 'Missing overview run rows.' }
+        $overview = $null; $overviewIds = @{}
+        foreach ($row in $overviewRuns) {
+            $rid = Get-LEGateField -Value $row -Selector $ResponseMap.selectors.overviewRunId
+            if ($rid -isnot [string] -or [string]::IsNullOrWhiteSpace($rid) -or $overviewIds.ContainsKey($rid)) { throw 'Invalid or duplicate overview run identity.' }
+            $overviewIds[$rid] = $true
+            if ($rid -ceq $TestRunId) { $overview = $row }
+        }
+        if ($null -eq $overview -or $overview.state -cne $run.state -or $overview.testResult -cne $run.result) { throw 'Candidate overview is absent or contradicts the run.' }
+        $login = Get-LEGateField -Value $overview -Selector $ResponseMap.selectors.overviewLogin
         if ($login -isnot [bool]) { throw 'Invalid login result.' }
         $normalized.loginSuccessful = $login
-        $rows = Get-LEGateField -Value $Capture.overview -Selector $ResponseMap.selectors.overviewApplications
+        $rows = Get-LEGateField -Value $overview -Selector $ResponseMap.selectors.overviewApplications
         if ($rows -isnot [array] -or $rows.Count -eq 0) { throw 'Empty overview.' }
         $sessions = @{}
         foreach ($s in @($Capture.sessions)) {
@@ -67,7 +77,21 @@ function ConvertTo-LEGateResult {
         foreach ($evidenceEvent in @($Capture.events)) {
             $type = Get-LEGateField -Value $evidenceEvent -Selector $ResponseMap.selectors.eventType
             if ($type -isnot [string] -or [string]::IsNullOrWhiteSpace($type)) { throw 'Malformed event type.' }
-            if ($type -in @('launcherOffline', 'connectionInitializationTimeout', 'loginFailure', 'sessionFailure')) { $normalized.infrastructureFailure = $true }
+            foreach ($field in @('testRunId', 'userSessionId', 'applicationId')) {
+                $value = $evidenceEvent.$field
+                if ($null -ne $value -and ($value -isnot [string] -or [string]::IsNullOrWhiteSpace($value))) { throw 'Malformed event relationship.' }
+            }
+            if ($null -ne $evidenceEvent.testRunId -and $evidenceEvent.testRunId -cne $TestRunId) { throw 'Event belongs to another run.' }
+            if ($null -ne $evidenceEvent.userSessionId -and -not $sessions.ContainsKey($evidenceEvent.userSessionId)) { throw 'Event session is not collected.' }
+            if ($null -ne $evidenceEvent.applicationId -and -not $seen.ContainsKey($evidenceEvent.applicationId)) { throw 'Event application is not collected.' }
+            if ($type -notin (Get-LEGateEventType)) { throw 'Unknown event type; review the API contract.' }
+            if ($type -in @('launcherOffline', 'connectionInitializationTimeout', 'loginFailure', 'sessionFailure',
+                    'launcherCapacityExceeded', 'accountCapacityExceeded', 'sessionDiscoveryError', 'accountDisabled',
+                    'sessionRequestEndedBeforeEngineBecameOnline', 'licenseSessionLimit', 'testRunCancelled',
+                    'appExecutionAbandoned', 'remoteSessionDisconnected', 'screenshotFailure', 'databaseFailure')) { $normalized.infrastructureFailure = $true }
+            if ($type -eq 'applicationFailure' -and (-not $evidenceEvent.applicationId -or
+                    -not $byApp.ContainsKey([string]$evidenceEvent.applicationId) -or $byApp[[string]$evidenceEvent.applicationId].failures -eq 0)) { throw 'Application failure event contradicts execution evidence.' }
+            if ($type -eq 'testRunFailed' -and $failures -eq 0) { throw 'Failed-run event lacks corresponding failure evidence.' }
         }
         $normalized.applications = @($apps.ToArray())
         $normalized.complete = $true
