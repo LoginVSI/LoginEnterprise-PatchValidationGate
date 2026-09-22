@@ -4,6 +4,8 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+- Fixed target remoting with configurable HTTP/HTTPS and ports across CLI, adapters, validation, restoration and Actions. HTTPS uses Negotiate with normal certificate validation; legacy HTTP/5985 recovery remains supported.
+
 - Added reviewed v7 and v8-preview static OpenAPI references with explicit provenance and sanitization.
 - Aligned candidate overview selection/comparison, native Events, screenshot retrieval and continuous scheduling with v8-preview; added spec-derived regressions.
 - Separated customer setup from contributor dependencies and added read-only AI prompts and external-pipeline guidance.

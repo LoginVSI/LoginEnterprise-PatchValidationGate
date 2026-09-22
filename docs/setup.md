@@ -42,7 +42,9 @@ $secureToken = Read-Host 'System Access Token' -AsSecureString
 $env:LE_API_TOKEN = (New-Object System.Net.NetworkCredential('', $secureToken)).Password
 $env:LE_API_VERSION = 'v8-preview'
 $env:LE_SKIP_CERT_CHECK = 'false'
-$env:LE_TARGET = Read-Host 'Reserved Windows target'
+$env:LE_TARGET = Read-Host 'Reserved Windows target DNS name matching its certificate'
+$env:LE_TARGET_TRANSPORT = 'HTTPS'
+$env:LE_TARGET_PORT = '5986'
 $env:LE_STATE_ROOT = Read-Host 'Shared durable state directory outside checkout'
 $env:LE_PRIVATE_ROOT = Read-Host 'Private evidence directory outside checkout'
 ```
@@ -50,6 +52,16 @@ $env:LE_PRIVATE_ROOT = Read-Host 'Private evidence directory outside checkout'
 All runners/operators must use the same canonical target and durable state location. Use trusted TLS. PS5.1 rejects certificate skipping; the PS7 exception is appliance-request-only and is not the recommended setup. Never disable GitHub or installer TLS validation. Environment secrets are available to this process and its children; close the shell when finished.
 
 API selection is explicit. Before changing versions, follow the [version assessment procedure](api-notes.md#version-comparison-and-upgrades), including code/profile review and fresh acceptance. A new version string alone does not provide compatibility.
+
+## Target PowerShell remoting
+
+Configure a WinRM HTTPS listener on the disposable target and allow TCP 5986 from the runner. Its server certificate must be valid, match the DNS name used in LE_TARGET (for example, validation-target.example.test), and chain to a CA trusted by the runner account. Check the listener and trust from that account before validation. Use explicit credentials with permission to run the adapter on the target. The gate uses Negotiate authentication.
+
+Target remoting is separate from appliance TLS. LE_SKIP_CERT_CHECK controls only appliance requests; it never changes target certificate validation. The adapter has no certificate bypass and never retries HTTPS over HTTP. Do not add TrustedHosts entries or enable Basic authentication to work around connection failures.
+
+Invoke-Gate.ps1 reads LE_TARGET_TRANSPORT and LE_TARGET_PORT. Explicit -TargetTransport and -TargetPort parameters override their respective environment values. Without configuration, HTTP/5985 remains the compatibility default for existing environments; HTTPS defaults to 5986 when no port is supplied. Set both values explicitly for repeatable operation. HTTP is intended for existing trusted domain remoting environments using Negotiate. Custom ports from 1 through 65535 are supported.
+
+The adapters/change/*.ps1 wrappers and direct Invoke-LEGateValidation and Invoke-LEGateChangeAdapter calls accept the same parameters but do not read these environment variables. Pass -TargetTransport HTTPS -TargetPort 5986 explicitly, including standalone restoration. Keep the same settings for apply, verify, resume and revert.
 
 ## Run validation after bootstrap
 
@@ -65,6 +77,8 @@ $gateArgs = @{
     ResponseProfile = 'config/response-profile.local.json'
     Adapter = 'app-update'
     Credential = $credential
+    TargetTransport = 'HTTPS'
+    TargetPort = 5986
 }
 & .\scripts\Invoke-Gate.ps1 @gateArgs
 $validationExit = $LASTEXITCODE

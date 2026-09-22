@@ -6,34 +6,28 @@ on:
 permissions:
   contents: read
 jobs:
-  offline:
+  offline-powershell:
     runs-on: windows-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        shell: [powershell, pwsh]
+    defaults:
+      run:
+        shell: powershell
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           persist-credentials: false
       - name: Install test tooling
-        shell: ${{ matrix.shell }}
         run: |
           .\scripts\Initialize-DevEnvironment.ps1
       - name: Lint
-        shell: ${{ matrix.shell }}
         run: |
           .\scripts\Invoke-Lint.ps1
       - name: Offline unit and full-flow tests
-        shell: ${{ matrix.shell }}
         run: |
           .\tests\Invoke-Tests.ps1 -Output Normal
       - name: Synthetic scenarios
-        shell: ${{ matrix.shell }}
         run: |
           .\scripts\Invoke-OfflineScenario.ps1
       - name: Static workflows and skill artifacts
-        shell: ${{ matrix.shell }}
         run: |
           py -m pip install --target .private/python PyYAML==6.0.3
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -42,6 +36,39 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: offline-summary-${{ matrix.shell }}
+          name: offline-summary-powershell
+          path: tests/results/summary-*.json
+          if-no-files-found: warn
+  offline-pwsh:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install test tooling
+        run: |
+          .\scripts\Initialize-DevEnvironment.ps1
+      - name: Lint
+        run: |
+          .\scripts\Invoke-Lint.ps1
+      - name: Offline unit and full-flow tests
+        run: |
+          .\tests\Invoke-Tests.ps1 -Output Normal
+      - name: Synthetic scenarios
+        run: |
+          .\scripts\Invoke-OfflineScenario.ps1
+      - name: Static workflows and skill artifacts
+        run: |
+          py -m pip install --target .private/python PyYAML==6.0.3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          py .\scripts\Test-RepositoryArtifacts.py
+      - name: Publish counts only, never the machine-bearing NUnit report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: offline-summary-pwsh
           path: tests/results/summary-*.json
           if-no-files-found: warn

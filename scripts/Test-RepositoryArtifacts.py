@@ -30,6 +30,11 @@ for mode in ("manual", "auto"):
     promotion = next(step for step in promotion_steps if "Invoke-Handoff.ps1" in step.get("run", ""))
     assert promotion["env"]["LE_STATE_ROOT"] == "${{ vars.LE_STATE_ROOT }}"
     assert promotion["env"]["LE_TARGET"] == "${{ secrets.LE_TARGET }}"
+gate = next(step for step in live["jobs"]["validate"]["steps"] if step.get("id") == "gate")
+for name in ("LE_TARGET_TRANSPORT", "LE_TARGET_PORT"):
+    assert gate["env"][name] == "${{ vars." + name + " }}"
+for name in ("TARGET_USER", "TARGET_PASSWORD"):
+    assert gate["env"][name] == "${{ secrets." + name + " }}"
 continuous = live["jobs"]["continuous-testing"]["if"]
 assert "!cancelled()" in continuous and "needs.validate.result == 'success'" in continuous
 assert "promote-manual.result == 'success'" in continuous
@@ -62,6 +67,17 @@ for job_result in ("success", "failure", "cancelled", "skipped"):
                 assert not gate_expression(continuous, values, cancelled=True)
                 if verdict != "PASS" or job_result != "success":
                     assert not allowed
+
+# Keep both supported shells explicit: GitHub rejected matrix.shell in step shell fields.
+ci = yaml.load((root / ".github/workflows/ci.yml").read_text(), Loader=Loader)
+assert set(ci["jobs"]) == {"offline-powershell", "offline-pwsh"}
+for shell in ("powershell", "pwsh"):
+    job = ci["jobs"]["offline-" + shell]
+    assert job["defaults"]["run"]["shell"] == shell
+    commands = "\n".join(step.get("run", "") for step in job["steps"])
+    for script in ("Initialize-DevEnvironment.ps1", "Invoke-Lint.ps1", "Invoke-Tests.ps1", "Invoke-OfflineScenario.ps1", "Test-RepositoryArtifacts.py"):
+        assert script in commands
+    assert all("shell" not in step for step in job["steps"])
 
 assert "[CLAUDE.md](CLAUDE.md)" in (root / "AGENTS.md").read_text()
 skill = root / ".agents/skills/evidence-explainer"
