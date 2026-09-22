@@ -30,6 +30,11 @@ for mode in ("manual", "auto"):
     promotion = next(step for step in promotion_steps if "Invoke-Handoff.ps1" in step.get("run", ""))
     assert promotion["env"]["LE_STATE_ROOT"] == "${{ vars.LE_STATE_ROOT }}"
     assert promotion["env"]["LE_TARGET"] == "${{ secrets.LE_TARGET }}"
+gate = next(step for step in live["jobs"]["validate"]["steps"] if step.get("id") == "gate")
+for name in ("LE_TARGET_TRANSPORT", "LE_TARGET_PORT"):
+    assert gate["env"][name] == "${{ vars." + name + " }}"
+for name in ("TARGET_USER", "TARGET_PASSWORD"):
+    assert gate["env"][name] == "${{ secrets." + name + " }}"
 continuous = live["jobs"]["continuous-testing"]["if"]
 assert "!cancelled()" in continuous and "needs.validate.result == 'success'" in continuous
 assert "promote-manual.result == 'success'" in continuous

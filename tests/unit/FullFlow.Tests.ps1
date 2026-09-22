@@ -113,6 +113,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         }
         Mock -ModuleName LEGate Invoke-Command {
             if ($ComputerName -ne 'synthetic-target' -or $null -eq $Credential) { throw 'Target credential not propagated.' }
+            if ([bool]$UseSSL -ne ($gateArgs.TargetTransport -eq 'HTTPS') -or $Port -ne $gateArgs.TargetPort -or $Authentication -ne 'Negotiate') { throw 'HTTPS target settings not propagated.' }
             [void]$calls.Add([pscustomobject]@{ method = 'REMOTE'; path = $ArgumentList[0]; body = $ArgumentList[2] })
             $state.operation = $ArgumentList[0]
             if ($state.operation -eq 'revert') {
@@ -159,6 +160,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
             Adapter = 'app-update'; Target = 'synthetic-target'; ContinuousTestName = 'patch-gate-continuous'
             StateRoot = (Join-Path -Path $caseRoot -ChildPath 'state'); EvidenceRoot = (Join-Path -Path $caseRoot -ChildPath 'evidence')
             Credential = $credential; ReportIssue = $true; Synthetic = $true; PromotionMode = 'manual'
+            TargetTransport = 'HTTPS'; TargetPort = 5986
         }
     }
     AfterAll {
@@ -184,6 +186,86 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
         $paths = @($calls | ForEach-Object { $_.path })
         [array]::IndexOf($paths, 'verify') | Should -BeLessThan ([array]::IndexOf($paths, '/publicApi/v8-preview/tests/test-1/start'))
         [array]::IndexOf($paths, '/publicApi/v8-preview/tests/continuous-1/start') | Should -BeLessThan ([array]::IndexOf($paths, '/repos/example/reference/issues/17'))
+    }
+    It 'rejects transport or port changes on resume and revert without releasing ownership' {
+        (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'PASS'
+        $leasePath = (Get-ChildItem $gateArgs.StateRoot -Filter '*.json').FullName
+        $originalLease = Get-Content $leasePath -Raw
+        $calls.Clear()
+        $gateArgs.TargetTransport = 'HTTP'
+        (Invoke-LEGateValidation @gateArgs -Resume).verdict | Should -Be 'INCONCLUSIVE'
+        (Invoke-LEGateValidation @gateArgs -Revert).exitCode | Should -Be 2
+        $gateArgs.TargetTransport = 'HTTPS'; $gateArgs.TargetPort = 5996
+        (Invoke-LEGateValidation @gateArgs -Resume).verdict | Should -Be 'INCONCLUSIVE'
+        (Invoke-LEGateValidation @gateArgs -Revert).exitCode | Should -Be 2
+        @($calls | Where-Object { $_.method -eq 'REMOTE' -or $_.method -eq 'PUT' }).Count | Should -Be 0
+        (Get-Content $leasePath -Raw) | Should -BeExactly $originalLease
+        $gateArgs.TargetPort = 5986
+        (Invoke-LEGateValidation @gateArgs -Revert).restored | Should -BeTrue
+    }
+    It 'preserves legacy HTTP lease recovery and custom HTTPS ports' {
+        foreach ($transport in @('HTTP', 'HTTPS')) {
+            $gateArgs.TargetTransport = $transport
+            $gateArgs.TargetPort = 5985
+            if ($transport -eq 'HTTPS') { $gateArgs.TargetPort = 5996 }
+            $gateArgs.StateRoot = Join-Path $caseRoot ('state-' + $transport)
+            (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'PASS'
+            if ($transport -eq 'HTTP') {
+                $leasePath = (Get-ChildItem $gateArgs.StateRoot -Filter '*.json').FullName
+                $lease = Get-Content $leasePath -Raw | ConvertFrom-Json
+                $lease.PSObject.Properties.Remove('targetTransport')
+                $lease.PSObject.Properties.Remove('targetPort')
+                $lease | ConvertTo-Json -Depth 30 | Set-Content $leasePath
+            }
+            (Invoke-LEGateValidation @gateArgs -Resume).verdict | Should -Be 'PASS'
+            (Invoke-LEGateValidation @gateArgs -Revert).restored | Should -BeTrue
+        }
+    }
+    It 'recovers a legacy interrupted apply over explicitly selected HTTPS without bypassing recovery confirmation' {
+        (Invoke-LEGateValidation @gateArgs).verdict | Should -Be 'PASS'
+        $leasePath = (Get-ChildItem $gateArgs.StateRoot -Filter '*.json').FullName
+        $lease = Get-Content $leasePath -Raw | ConvertFrom-Json
+        $lease.PSObject.Properties.Remove('targetTransport')
+        $lease.PSObject.Properties.Remove('targetPort')
+        $lease.stage = 'applying'; $lease.runId = $null
+        $lease | ConvertTo-Json -Depth 30 | Set-Content $leasePath
+        $calls.Clear()
+        (Invoke-LEGateValidation @gateArgs -Revert).exitCode | Should -Be 2
+        @($calls | Where-Object { $_.method -eq 'REMOTE' }).Count | Should -Be 0
+        (Invoke-LEGateValidation @gateArgs -Revert -RecoveryConfirmed).restored | Should -BeTrue
+        $restoredLease = Get-Content $leasePath -Raw | ConvertFrom-Json
+        $restoredLease.targetTransport | Should -Be 'HTTPS'
+        $restoredLease.targetPort | Should -Be 5986
+        $restoredLease.stage | Should -Be 'reverted'
+    }
+    It 'passes standalone HTTPS defaults and credentials for every operation without fallback' {
+        Mock -ModuleName LEGate Invoke-Command { throw 'Synthetic certificate validation failure.' }
+        foreach ($operation in @('apply', 'verify', 'revert')) {
+            $result = Invoke-LEGateChangeAdapter -Operation $operation -Adapter break -ChangeId standalone -Target synthetic-target -Parameters $manifest -Credential $credential -TargetTransport HTTPS
+            $result.status | Should -Be 'failed'
+            $result.details.recoveryRequired | Should -BeTrue
+            Should -Invoke -ModuleName LEGate Invoke-Command -Times 1 -Exactly -ParameterFilter {
+                $UseSSL -and $Port -eq 5986 -and $Authentication -eq 'Negotiate' -and
+                $Credential.UserName -eq 'synthetic-account' -and $ComputerName -eq 'synthetic-target' -and
+                $ArgumentList[0] -eq $operation -and $AsJob -and $null -eq $SessionOption
+            }
+        }
+        Should -Invoke -ModuleName LEGate Invoke-Command -Times 3 -Exactly
+    }
+    It 'supports standalone HTTP defaults and deliberate current credentials' {
+        Mock -ModuleName LEGate Invoke-Command { $state.remoteCredentialBound = $PSBoundParameters.ContainsKey('Credential'); throw 'Synthetic boundary.' }
+        $null = Invoke-LEGateChangeAdapter -Operation verify -Adapter app-update -ChangeId standalone -Target synthetic-target -Parameters $manifest -UseCurrentCredentials
+        Should -Invoke -ModuleName LEGate Invoke-Command -Times 1 -Exactly -ParameterFilter {
+            -not $UseSSL -and $Port -eq 5985 -and $Authentication -eq 'Negotiate'
+        }
+        $state.remoteCredentialBound | Should -BeFalse
+    }
+    It 'rejects invalid target settings before remoting' {
+        foreach ($portValue in @(0, -1, 65536)) {
+            { Invoke-LEGateChangeAdapter -Operation verify -Adapter app-update -ChangeId standalone -Target synthetic-target -Parameters $manifest -Credential $credential -TargetPort $portValue } | Should -Throw
+        }
+        { Invoke-LEGateChangeAdapter -Operation verify -Adapter app-update -ChangeId standalone -Target synthetic-target -Parameters $manifest -Credential $credential -TargetTransport invalid } | Should -Throw
+        Should -Invoke -ModuleName LEGate Invoke-Command -Times 0 -Exactly
     }
     It 'enforces auto guardrails through real validation and promotion' {
         $gateArgs.PromotionMode = 'auto'

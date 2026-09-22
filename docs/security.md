@@ -8,7 +8,7 @@ Images require explicit human review of pixels and metadata, redaction, and revi
 
 SHA-256 detects changes relative to a trusted independent hash; it is not a signature. Consumers reject unsafe paths, reparse points, missing/extra files, and hash/size mismatches.
 
-The persistent PS5.1 certificate bypass is removed. PS7's optional exception applies only to appliance requests. GitHub and pinned installer downloads use normal TLS without redirects.
+The persistent PS5.1 certificate bypass is removed. PS7's optional exception applies only to appliance requests. GitHub and pinned installer downloads use normal TLS without redirects. Target HTTPS remoting always validates its certificate normally, independently of LE_SKIP_CERT_CHECK. Target authentication uses Negotiate; no Basic authentication, TrustedHosts changes or certificate-check bypasses are supplied.
 
 ## External settings before live wiring
 

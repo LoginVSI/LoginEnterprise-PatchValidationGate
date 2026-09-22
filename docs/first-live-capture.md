@@ -48,6 +48,8 @@ $adapterArgs = @{
     Target = $env:LE_TARGET
     Parameters = $change
     Credential = $credential
+    TargetTransport = 'HTTPS'
+    TargetPort = 5986
 }
 try {
     foreach ($operation in @('apply', 'verify')) {

@@ -1,5 +1,12 @@
 <# .SYNOPSIS
 Runs private live validation; optionally exports a safe public projection.
+.DESCRIPTION
+Target remoting is independent of LE appliance TLS. HTTPS validates the target
+certificate normally and never falls back to HTTP.
+.PARAMETER TargetTransport
+HTTP or HTTPS; defaults to LE_TARGET_TRANSPORT, otherwise HTTP for compatibility.
+.PARAMETER TargetPort
+WSMan port; defaults to LE_TARGET_PORT, otherwise 5986 for HTTPS or 5985 for HTTP.
 #>
 [CmdletBinding()]
 param(
@@ -13,6 +20,8 @@ param(
     [ValidateSet('manual', 'auto')][string]$PromotionMode = 'manual',
     [string]$StateRoot = $env:LE_STATE_ROOT,
     [string]$EvidenceRoot = $env:LE_PRIVATE_ROOT,
+    [ValidateSet('HTTP', 'HTTPS')][string]$TargetTransport = $(if ($env:LE_TARGET_TRANSPORT) { $env:LE_TARGET_TRANSPORT } else { 'HTTP' }),
+    [ValidateRange(1, 65535)][int]$TargetPort = $(if ($env:LE_TARGET_PORT) { $env:LE_TARGET_PORT } elseif ($TargetTransport -eq 'HTTPS') { 5986 } else { 5985 }),
     [pscredential]$Credential, [switch]$UseCurrentCredentials, [switch]$Local,
     [switch]$Resume, [switch]$Revert, [switch]$RecoveryConfirmed, [switch]$ReportIssue,
     [string]$PublicationPath, [string]$BaselineRunId
@@ -22,6 +31,8 @@ $root = Split-Path -Path $PSScriptRoot -Parent
 Import-Module (Join-Path -Path $root -ChildPath 'src/LEGate/LEGate.psd1') -Force
 if ($env:GITHUB_OUTPUT) { 'verdict=INCONCLUSIVE' | Out-File -LiteralPath $env:GITHUB_OUTPUT -Append -Encoding utf8 }
 try {
+    # PowerShell does not apply validation attributes to default expressions.
+    if ($TargetTransport -notin @('HTTP', 'HTTPS') -or $TargetPort -lt 1 -or $TargetPort -gt 65535) { throw 'Invalid target transport or port.' }
     if (-not $StateRoot -or -not $EvidenceRoot) { throw 'Set private evidence and durable state roots.' }
     if ($env:GITHUB_ACTIONS -eq 'true') {
         foreach ($privateRoot in @($StateRoot, $EvidenceRoot)) {
@@ -40,6 +51,7 @@ try {
     $requestArgs = @{
         ChangeId = $ChangeId; RepositoryRoot = $root; PolicyFile = $PolicyFile; ChangeManifest = $ChangeManifest
         ResponseProfile = $ResponseProfile; Adapter = $Adapter; Target = $Target; ContinuousTestName = $ContinuousTestName
+        TargetTransport = $TargetTransport; TargetPort = $TargetPort
         StateRoot = $StateRoot; EvidenceRoot = $EvidenceRoot; PromotionMode = $PromotionMode
         UseCurrentCredentials = $UseCurrentCredentials; Local = $Local; Resume = $Resume; Revert = $Revert
         RecoveryConfirmed = $RecoveryConfirmed; ReportIssue = $ReportIssue; BaselineRunId = $BaselineRunId; SourceCommit = $sourceCommit

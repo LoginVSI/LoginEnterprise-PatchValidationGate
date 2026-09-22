@@ -1,5 +1,10 @@
 # Implementation progress
 
+Target remoting fix verified on 2026-09-22. TargetTransport and TargetPort now reach Invoke-Command through the CLI, all standalone adapter wrappers, validation and restoration. HTTPS uses Negotiate and normal certificate validation, independently of appliance TLS. New leases retain the selected settings; legacy leases can recover over explicitly selected HTTPS without changing identity or bypassing recovery confirmation.
+
+Windows PowerShell 5.1.26100.9444 and PowerShell 7.6.6 each passed 132 offline tests with zero failures or skips, and full PSScriptAnalyzer lint with no findings. Synthetic PASS, FAIL and INCONCLUSIVE bundles verified in both shells. Static workflow/skill artifact checks and whitespace checks passed. Coverage includes actual remoting arguments, environment and wrapper propagation, custom ports, HTTPS failure without fallback, legacy recovery, connection mismatch rejection and existing restoration locks. No appliance contact, target mutation, runner registration or workflow dispatch was performed. Live acceptance remains pending.
+
+
 Offline specification alignment and public usability pass completed on 2026-09-18, based on 9f3857f. No appliance calls or live workflow dispatches were made. End-to-end acceptance remains pending.
 
 Completed: reviewed all 219 v8-preview paths and 486 schemas with reference resolution, including explicit recursive backreferences; corrected candidate overview selection/comparison, native event fields/relationships, unpaged screenshot retrieval and continuous scheduling/session checks. Profile version 2 remains spec-derived until genuine capture review. Customer setup, AI prompts, integration boundaries and recovery/acceptance guidance are updated. The former public handoff was preserved privately before removal; historical copies remain in Git history.

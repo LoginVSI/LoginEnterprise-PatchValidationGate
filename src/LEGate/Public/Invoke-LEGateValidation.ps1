@@ -1,6 +1,13 @@
 function Invoke-LEGateValidation {
     <# .SYNOPSIS
     Runs the private validation lifecycle with durable identity and target recovery state.
+    .DESCRIPTION
+    Target remoting uses Negotiate with normal certificate validation for HTTPS.
+    The same transport and port must be used for apply, verify and restoration.
+    .PARAMETER TargetTransport
+    HTTP (compatibility default) or HTTPS. Independent of appliance TLS settings.
+    .PARAMETER TargetPort
+    Target WSMan port. Defaults to 5985 for HTTP or 5986 for HTTPS.
     #>
     [CmdletBinding()]
     param(
@@ -8,6 +15,8 @@ function Invoke-LEGateValidation {
         [string]$ResponseProfile, [ValidateSet('app-update', 'break', 'noop')][string]$Adapter,
         [string]$Target, [string]$ContinuousTestName, [string]$StateRoot, [string]$EvidenceRoot,
         [ValidateSet('manual', 'auto')][string]$PromotionMode = 'manual',
+        [ValidateSet('HTTP', 'HTTPS')][string]$TargetTransport = 'HTTP',
+        [ValidateRange(1, 65535)][int]$TargetPort = $(if ($TargetTransport -eq 'HTTPS') { 5986 } else { 5985 }),
         [pscredential]$Credential, [switch]$UseCurrentCredentials, [switch]$Local,
         [switch]$Resume, [switch]$Revert, [switch]$RecoveryConfirmed,
         [switch]$ReportIssue, [string]$BaselineRunId, [switch]$Synthetic, [string]$SourceCommit = $env:GITHUB_SHA
@@ -54,6 +63,15 @@ function Invoke-LEGateValidation {
             $state = Get-Content -LiteralPath $lock.leasePath -Raw | ConvertFrom-Json
             if ($state.identityHash -cne $context.identityHash -and $state.stage -ne 'reverted') { throw 'Target has an unrestored change. Recover it before another change.' }
             if ($state.identityHash -ceq $context.identityHash) {
+                if ($state.PSObject.Properties['targetTransport'] -or $state.PSObject.Properties['targetPort']) {
+                    if ($state.targetTransport -ne $TargetTransport -or $state.targetPort -ne $TargetPort) { throw 'Target remoting settings differ from the lease. Use the original transport and port for recovery.' }
+                }
+                else {
+                    # Legacy leases may record a failed HTTP attempt on an HTTPS-only target.
+                    # Preserve recovery with caller-selected settings; the next lease write binds them.
+                    $state | Add-Member -NotePropertyName targetTransport -NotePropertyValue $TargetTransport
+                    $state | Add-Member -NotePropertyName targetPort -NotePropertyValue $TargetPort
+                }
                 if (-not $Resume -and -not $Revert) { throw 'Existing identity requires explicit Resume or Revert.' }
                 if ($state.stage -eq 'reverted') { throw 'Restored changes cannot be replayed. Use a fresh change ID.' }
             }
@@ -68,7 +86,7 @@ function Invoke-LEGateValidation {
             if ($activeSession.testId -isnot [string] -or [string]::IsNullOrWhiteSpace($activeSession.testId)) { throw 'Active session test identity unavailable.' }
             if ($activeSession.testId -ceq $continuous.id) { throw 'Wait for shared-target continuous sessions to drain before mutation.' }
         }
-        $adapterArgs = @{ Adapter = $Adapter; ChangeId = $ChangeId; Target = $Target; Parameters = $manifest; UseCurrentCredentials = $UseCurrentCredentials; Local = $Local }
+        $adapterArgs = @{ Adapter = $Adapter; ChangeId = $ChangeId; Target = $Target; Parameters = $manifest; UseCurrentCredentials = $UseCurrentCredentials; Local = $Local; TargetTransport = $TargetTransport; TargetPort = $TargetPort }
         if ($Credential) { $adapterArgs.Credential = $Credential }
         if ($Revert) {
             if ($test.state -ne 'enabled') { throw 'Application test is still using the target.' }
@@ -110,7 +128,7 @@ function Invoke-LEGateValidation {
             if ($test.state -ne 'enabled') { throw 'Application test must be enabled and idle.' }
             $existing = @(Get-LEGateAllPages -Session $session -Path ('/tests/' + $test.id + '/test-runs') -Query @{ count = 20; orderBy = 'created'; direction = 'desc' } | Where-Object { $_.testRunName -ceq $ChangeId })
             if ($existing.Count) { throw 'A named run exists without matching durable identity. Use a fresh change ID.' }
-            $state = [pscustomobject]@{ identityHash = $context.identityHash; identity = $identity; stage = 'applying'; runId = $null; issueNumber = $issue.number }
+            $state = [pscustomobject]@{ identityHash = $context.identityHash; identity = $identity; targetTransport = $TargetTransport; targetPort = $TargetPort; stage = 'applying'; runId = $null; issueNumber = $issue.number }
             Write-LEGateJson -Path $lock.leasePath -Value $state
             $adapterResults.apply = Invoke-LEGateChangeAdapter @adapterArgs -Operation apply
             Write-LEGateJson -Path (Join-Path -Path $folder -ChildPath 'adapter-apply.json') -Value $adapterResults.apply
