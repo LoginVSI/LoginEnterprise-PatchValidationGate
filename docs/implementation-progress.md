@@ -1,5 +1,30 @@
 # Implementation progress
 
+## Public Actions setup, 2026-09-23
+
+The source main commit was rechecked as `67f126b4b8127702fe8cb07e6029644486f2267e`.
+The intended public personal execution repository was empty. Separate stored work
+and personal GitHub identities were verified without changing global authentication.
+No runner or environment was configured initially.
+
+The public export now removes PR-triggered CI and records that transformation.
+Hosted CI can be dispatched explicitly after an import with Actions disabled.
+The original development checkout remains separate from the execution copy.
+
+Actions lab acceptance is still blocked: this machine lacks the previous private
+handoff, configuration, credential store and recovery evidence. No isolated runner
+VM access route has been supplied. The existing workflow also requires independent
+recovery supervision and authoritative approval acquisition before live dispatch.
+No target observation, mutation, restoration, promotion or Continuous Test run is
+claimed by this setup pass. Previous local results retain their original scope.
+
+Offline verification: 146 tests passed with zero failures or skips in each of
+Windows PowerShell 5.1 and PowerShell 7. Lint reported no findings in either shell.
+Synthetic PASS, FAIL and INCONCLUSIVE bundles verified in both shells, and static
+workflow/action-pin/artifact checks passed. Fresh setup initially selected Pester
+6 and failed a filtered-mock recovery-lock test; pinning Pester 5.7.1 fixed this
+without changing assertions. Hosted Actions results remain a separate check.
+
 ## Local acceptance, 2026-09-22
 
 The supported repository orchestrator produced PASS for the pinned application update and FAIL for the deliberately broken executable. Revert completed after each, with independent baseline file/version/hash checks and fresh passing LE workloads. Recovery from the earlier interrupted mutation completed before new scenarios. A bounded Continuous Test check observed both required applications, disabled scheduling and verified session drain. Final state was the baseline version with no active sessions and the target lease reverted; historical records and lock files were retained.

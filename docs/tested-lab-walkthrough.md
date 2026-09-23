@@ -31,6 +31,12 @@ Set policy `execution.maxWaitMinutes` and `execution.pollIntervalSeconds` before
 
 ## Acceptance limits
 
+During public Actions setup on 2026-09-23, the previous private evidence directory
+was absent on the current machine. The local results above remain the recorded
+2026-09-22 observations; they have not been reverified against their private
+originals in this pass. The public execution export is hardened separately, and
+Actions end-to-end acceptance remains pending recovery inputs and runner access.
+
 PASS and deliberate FAIL are live observations. INCONCLUSIVE, malformed identity handling, late responses and interruption edges have offline regression coverage; no live infrastructure fault was induced. The sanitized genuine fixtures preserve observed success/failure shapes and relationships, while screenshots and original identifiers stay private.
 
 GitHub Actions execution, environment protection, issue reporting/closure, authoritative approval acquisition and simulated promotion remain pending. Production promotion is not implemented. Snapshot existence is operator-confirmed and no snapshot restore was performed. Live PowerShell 5.1 mutation was not repeated; both supported shells run the offline tests and lint. The [approval evidence limitation](approval-evidence.md) stays fail-closed. Prepare the later Actions copy using [pinned development exports](private-execution-repository.md).

@@ -1,5 +1,12 @@
 # Live acceptance
 
+The 2026-09-23 public Actions setup pass found an empty execution repository and
+verified separate personal administration credentials. Its current machine has no
+previous private handoff or recovery material, and no isolated runner access route
+has been supplied. Public export hardening does not satisfy the live checklist.
+Do not dispatch mutations until those inputs, independent recovery supervision
+and authoritative approval acquisition are established.
+
 Local lab acceptance completed on 2026-09-22 (local date) using LE 6.8.6 and v8-preview over validated TLS. The supported repository validation and revert paths were exercised. See [tested lab walkthrough](tested-lab-walkthrough.md) for scope, recovery behavior and remaining gaps. No GitHub workflow was dispatched and no promotion was performed.
 
 Verified privately: recovery from interrupted mutation; good-update PASS; deliberate-break FAIL with native application failure and screenshot bytes; exact baseline file/version/hash and fresh passing workloads after each restoration; Continuous Test workload execution followed by scheduling disablement and observed session drain. The snapshot remains operator-confirmed, not independently inspected or restore-tested.

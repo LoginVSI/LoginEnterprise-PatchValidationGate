@@ -80,6 +80,10 @@ for job_result in ("success", "failure", "cancelled", "skipped"):
 
 # Keep both supported shells explicit: GitHub rejected matrix.shell in step shell fields.
 ci = yaml.load((root / ".github/workflows/ci.yml").read_text(), Loader=Loader)
+if export_record.exists() and export.get("publicRepository") is True:
+    assert set(ci["on"]) == {"push", "workflow_dispatch"}, "Public execution CI must not accept PR code"
+    assert ci["on"]["push"]["branches"] == ["main"]
+    assert all(job["runs-on"] == "windows-latest" for job in ci["jobs"].values())
 assert set(ci["jobs"]) == {"offline-powershell", "offline-pwsh"}
 for shell in ("powershell", "pwsh"):
     job = ci["jobs"]["offline-" + shell]

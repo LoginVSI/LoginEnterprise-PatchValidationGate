@@ -33,3 +33,18 @@ Move-Item -LiteralPath $temporary -Destination $destination -ErrorAction Stop
 Once GitHub releases the protected job, Invoke-Handoff waits up to 120 seconds for delivery, checking every two seconds and bounding the final sleep. It rejects delivery at/after the deadline. JSON errors fail immediately. The parser compares repository/run/attempt/environment/reviewer with the workflow context and the single matching approved review. Missing or ambiguous history fails closed, including reruns whose review history cannot be uniquely resolved. The GitHub lookup has its own bounded request timeout; the 120-second limit applies to file delivery.
 
 The private approval capture retains the review response, supplied envelope, workflow identity and separately labeled observation time. Promotion records include the attempt and envelope hash. These checks detect mismatches; trusted source acquisition and custody remain prerequisites. Neither GITHUB_ACTOR nor a workflow start time is approval evidence. Auto mode is a separate policy path and does not satisfy manual-approval acceptance.
+
+## Alternative approval decision
+
+The [pull-request review API](https://docs.github.com/en/rest/pulls/reviews)
+provides a review's `submitted_at`, reviewer, state and `commit_id`. This can support
+a separate, explicit approval decision over a committed acceptance request. It
+does not establish the timestamp of an environment-button approval.
+
+Such an integration must bind the reviewed commit to the repository, workflow run
+and attempt, environment, exact validation manifest hash and execution commit.
+It must verify reviewer authorization, reject dismissed or superseded decisions,
+and retain the source API response. Keep the environment protection as an
+additional gate. Approval-request PRs must never execute on the lab runner.
+The current parser does not implement this alternative, and no actual decision
+or correlated approval record has been acquired in the public setup pass.

@@ -10,6 +10,10 @@
         $sourceWorkflow = Get-Content (Join-Path $repositoryRoot '.github/workflows/validate-patch.yml') -Raw
         $sourceWorkflow = $sourceWorkflow -replace "github.repository == '[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+'", "github.repository == 'LoginVSI/LoginEnterprise-PatchValidationGate'"
         Set-Content (Join-Path $sourceRoot '.github/workflows/validate-patch.yml') $sourceWorkflow -Encoding utf8
+        # This fixture models development CI even when tests run in a public export.
+        $ciWorkflow = Get-Content (Join-Path $repositoryRoot '.github/workflows/ci.yml') -Raw
+        if ($ciWorkflow -notmatch '(?m)^  pull_request:') { $ciWorkflow = $ciWorkflow -replace '(?m)^permissions:', "  pull_request:`npermissions:" }
+        Set-Content (Join-Path $sourceRoot '.github/workflows/ci.yml') $ciWorkflow -Encoding utf8
         git -C $sourceRoot init --quiet
         git -C $sourceRoot add -- .
         git -C $sourceRoot -c user.name=Fixture -c user.email=fixture@example.invalid -c commit.gpgsign=false commit --quiet -m 'Synthetic export source'
@@ -29,5 +33,19 @@
     }
     It 'rejects an expression injection as the repository name' {
         { & $exportScript -Repository "owner/repo' || true" -SourceCommit $sourceCommit -Destination (Join-Path $TestDrive 'invalid') } | Should -Throw
+    }
+    It 'omits untrusted PR execution only from explicitly public exports' {
+        $destination = Join-Path $TestDrive 'public-copy'
+        & $exportScript -Repository 'example-owner/public-execution' -SourceCommit $sourceCommit -Destination $destination -PublicRepository
+        $ci = Get-Content (Join-Path $destination '.github/workflows/ci.yml') -Raw
+        $ci | Should -Not -Match 'pull_request'
+        $ci | Should -Match 'branches: \[main\]'
+        $ci | Should -Match 'runs-on: windows-latest'
+        (Get-Content (Join-Path $sourceRoot '.github/workflows/ci.yml') -Raw) | Should -Match 'pull_request:'
+        $metadata = Get-Content (Join-Path $destination 'execution-source.json') -Raw | ConvertFrom-Json
+        $metadata.publicRepository | Should -BeTrue
+    }
+    It 'rejects the development destination irrespective of casing' {
+        { & $exportScript -Repository 'loginvsi/loginenterprise-patchvalidationgate' -SourceCommit $sourceCommit -Destination (Join-Path $TestDrive 'self') } | Should -Throw '*separate execution*'
     }
 }

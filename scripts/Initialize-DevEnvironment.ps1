@@ -30,7 +30,7 @@ if ($PSVersionTable.PSEdition -eq 'Desktop') {
 [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor [System.Net.SecurityProtocolType]::Tls12
 
 $required = @(
-    @{ Name = 'Pester'; MinimumVersion = '5.5.0' },
+    @{ Name = 'Pester'; MinimumVersion = '5.7.1'; RequiredVersion = '5.7.1' },
     @{ Name = 'PSScriptAnalyzer'; MinimumVersion = '1.21.0' }
 )
 
@@ -48,12 +48,15 @@ catch {
 }
 
 foreach ($module in $required) {
-    $installed = Get-Module -ListAvailable -Name $module.Name | Where-Object { $_.Version -ge [Version]$module.MinimumVersion } | Select-Object -First 1
+    $installed = Get-Module -ListAvailable -Name $module.Name | Where-Object {
+        if ($module.RequiredVersion) { $_.Version -eq [Version]$module.RequiredVersion }
+        else { $_.Version -ge [Version]$module.MinimumVersion }
+    } | Select-Object -First 1
     if ($installed) {
         Write-Output ('{0} {1} is already available.' -f $module.Name, $installed.Version)
         continue
     }
-    Write-Output ('Installing {0} {1} or later for the current user.' -f $module.Name, $module.MinimumVersion)
+    Write-Output ('Installing the configured version of {0} for the current user.' -f $module.Name)
     try {
         Import-Module -Name PowerShellGet -ErrorAction Stop
     }
@@ -62,8 +65,15 @@ foreach ($module in $required) {
         Write-Warning ('Fallback: from PowerShell 7 run  Save-Module -Name {0} -Path "$HOME\Documents\WindowsPowerShell\Modules"  and rerun this script. See docs/setup.md.' -f $module.Name)
         exit 1
     }
-    Install-Module -Name $module.Name -MinimumVersion $module.MinimumVersion -Scope CurrentUser -Force -SkipPublisherCheck -AllowClobber
-    $installed = Get-Module -ListAvailable -Name $module.Name | Sort-Object -Property Version -Descending | Select-Object -First 1
+    $installArgs = @{ Name = $module.Name; Scope = 'CurrentUser'; Force = $true; SkipPublisherCheck = $true; AllowClobber = $true }
+    if ($module.RequiredVersion) { $installArgs.RequiredVersion = $module.RequiredVersion }
+    else { $installArgs.MinimumVersion = $module.MinimumVersion }
+    Install-Module @installArgs
+    $installed = Get-Module -ListAvailable -Name $module.Name | Where-Object {
+        if ($module.RequiredVersion) { $_.Version -eq [Version]$module.RequiredVersion }
+        else { $_.Version -ge [Version]$module.MinimumVersion }
+    } | Sort-Object -Property Version -Descending | Select-Object -First 1
+    if (-not $installed) { throw 'The configured module version is unavailable after installation.' }
     Write-Output ('Installed {0} {1}.' -f $module.Name, $installed.Version)
 }
 
@@ -74,7 +84,7 @@ Write-Output '  LE_API_TOKEN    System access token with a read-tests and start-
 Write-Output ''
 Write-Output 'Optional:'
 Write-Output '  LE_TEST_NAME       Exact application test name, used by the integration tests'
-Write-Output '  LE_SKIP_CERT_CHECK Set to 1 for a lab appliance with a self-signed certificate'
+Write-Output '  LE_SKIP_CERT_CHECK Keep false and configure trusted appliance TLS'
 Write-Output '  LEGATE_LOG_FORMAT  Set to json for one JSON object per log line'
 Write-Output ''
 
