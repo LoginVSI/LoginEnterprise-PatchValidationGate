@@ -2,17 +2,20 @@
 
 ## Original-laptop continuation, 2026-09-23
 
-Recovered private originals, restored the clean public execution checkout and
-verified its current controls. A temporary non-admin account passed real profile,
-credential and control-checkout denial checks. No runner registration or live
-mutation occurred. Authenticated WinRM now succeeds with an explicit direct
-per-session proxy choice. Fresh preflight verified the baseline hash/version,
-idle target and designated tests, disabled Continuous Testing, and released locks.
+Recovered private originals, restored the public execution checkout and verified
+its controls. A temporary non-admin runner completed good-update PASS and deliberate
+application FAIL validation on the existing pinned execution main. Both sanitized
+artifacts passed upload/download digest and manifest checks. Independent restoration,
+fresh baseline workloads and drain checks passed after each scenario. Runner/account
+access and runtime secrets were removed; live dispatch was disabled again.
 
 The optional remoting proxy setting retains normal TLS checks. Approval uses the
 existing environment and authoritative time-evidence contract; no additional PR
-approval mechanism is included. New source changes require normal review and a
-regenerated execution export. See the [one-off checkpoint](one-off-actions-acceptance.md).
+approval mechanism is included. Approval provenance, simulated promotion, Actions
+Continuous Test handoff and good-issue closure remain blocked. New source changes
+and their generated execution copy await normal review. Both shells passed 150 tests,
+lint and synthetic checks; hosted source CI passed. See the
+[one-off acceptance record](one-off-actions-acceptance.md).
 
 ## Public Actions setup, 2026-09-23
 

@@ -1,5 +1,12 @@
 # Specification facts and live acceptance gaps
 
+The 2026-09-23 Actions pass confirmed that a run with `result: successful` can
+contain a required application execution in `endedWithErrors`. The deliberate
+failure had one matching application-failure Event and an execution-linked
+screenshot. Evaluate the application evidence, not only run orchestration status.
+An offline assigned launcher separately produced zero executions and an
+INCONCLUSIVE result. See the [recorded outcomes](one-off-actions-acceptance.md).
+
 The reviewed [v8-preview snapshot](api/login-enterprise-v8-preview.openapi.json) establishes the contracts summarized in [API notes](api-notes.md). All local references have been resolved for review. Genuine LE 6.8.6 success, deliberate-failure and restoration captures are now reviewed. Sanitized derivatives are in tests/fixtures/sanitized-live; originals remain private.
 
 The example profile uses spec-derived selectors and envelopes. A live profile needs `provenance: capture-confirmed` and `confirmedFrom` identifying reviewed private captures. That is an operator attestation, not automated proof. Never change synthetic provenance to bypass preflight.

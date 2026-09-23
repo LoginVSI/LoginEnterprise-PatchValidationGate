@@ -1,12 +1,12 @@
 # Live acceptance
 
-Current continuation status: the original private records and credentials are
-available, and a temporary non-admin account passed actual access-denial checks.
-Authenticated target remoting and fresh baseline preflight now pass with an explicit
-direct proxy choice. The runner is unregistered and
-live Actions acceptance remains pending. See the [one-off checkpoint](one-off-actions-acceptance.md)
-for the exact verified scope and recovery requirements. The setup-pass narrative
-below describes the earlier machine, not the recovered original laptop.
+Current continuation status: live Actions validation produced the expected good-update
+PASS and deliberate application FAIL. Both artifact downloads passed digest and bundle
+checks. Independent restoration and fresh baseline workloads passed after each scenario.
+Temporary runner access and runtime secrets were removed. Authoritative approval-time
+evidence, simulated promotion, Actions Continuous Test handoff and good-issue closure
+remain blocked. See the [one-off acceptance record](one-off-actions-acceptance.md).
+The setup-pass narrative below describes the earlier machine and is historical.
 
 The 2026-09-23 public Actions setup pass found an empty execution repository and
 verified separate personal administration credentials. Its current machine has no

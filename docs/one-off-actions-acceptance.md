@@ -1,125 +1,141 @@
-# One-off Actions acceptance checkpoint
+# One-off Actions acceptance
 
-This exercise supports a tested preview, walkthrough and product requirements.
-It is not an ongoing deployment service. Production promotion remains simulated.
+This exercise supports a tested preview, blog, Storylane walkthrough and product
+requirements. Production promotion is simulated. The execution repository remains
+public, and the development repository remains the sole source of reusable code.
 
-## Verified in the continuation
+## Verified results, 2026-09-23
 
-The original private configuration, account-bound credentials, installer
-provenance, capture bundles and recovery journals were recovered. The execution
-checkout was restored without losing its previous exported files. Its public
-visibility, protected main branch, pinned actions and protected human approval
-environment remain intact. Existing hosted CI and count-only artifact digest
-checks are recorded in the execution repository's acceptance issue.
+Live validation used execution commit
+`8ac4d9eabe60185886dd0ef79b318f3bf2b6f767`, exported from source
+`c4e80c84f1bb1185a3117086ba49d387dcf715b8`. New source fixes were tested separately
+and did not replace protected execution main during the exercise.
 
-The operator selected a temporary supervised laptop runner under a separate
-non-admin account. A real process under that account could not enumerate the
-everyday profile, SSH/configuration directories or either control checkout tree,
-and could not open the original lab credential files or Git configuration. The
-checkout roots needed explicit account-specific deny rules because their prior
-ACLs allowed Authenticated Users to modify files. Those temporary rules are
-journaled for removal. This is restricted use of a shared Windows host, not VM
-isolation. The runner has not been registered or given runtime credentials.
+| Requirement | Result | Evidence |
+| --- | --- | --- |
+| Good update | Verified: both required applications PASS, one execution each | [Validation run](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35925744830) |
+| Deliberate failure | Verified: one required application FAIL, the other PASS | [Failure run](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35926329590) |
+| Failure evidence | Verified: unique failed execution joined to an application-failure Event by run/session/application; screenshot directly references that execution | Exact identifiers, image bytes and hash retained privately |
+| Sanitized artifacts | Verified: both downloaded ZIPs match GitHub SHA-256 digests; manifests, private-evidence backlinks and private-value scans pass | [PASS artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35925744830/artifacts/10779011660), [FAIL artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35926329590/artifacts/10779940069) |
+| Restoration after each scenario | Verified: 23.01 executable/version/hash, no disabled copy, fresh required-application PASS and drained sessions | Separate private supervision and readiness records |
+| Failure issue | Verified open; promotion and Continuous Testing skipped | [Issue #4](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/issues/4) |
+| Good-update issue closure | Blocked: validation passed, but downstream approval/promotion/handoff did not complete | [Issue #3 remains open](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/issues/3) |
+| Authoritative approval evidence and simulated promotion | Blocked: no verified authoritative approval-time producer satisfies the existing correlation contract | [Approval evidence](approval-evidence.md) |
+| Actions Continuous Test handoff and new iteration | Blocked by promotion; no downstream start was attempted | Earlier independent local workload observations remain in the [local walkthrough](tested-lab-walkthrough.md) |
+| Protected execution-copy publication | Pending normal source and protected-main PR review | [Source PR #3](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/pull/3), [source PR #4](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/pull/4), [generated-copy PR #2](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/pull/2) |
 
-A bounded read-only probe under the temporary account authenticated to the target
-with normal TLS and the default WSMan proxy selection. Its PowerShell child needed
-machine module paths instead of the control account's inherited module paths.
-Target credentials were supplied in process memory for that probe and were not
-copied from the private credential store onto the runner filesystem.
+The good workflow's validation job succeeded. The independent supervisor canceled
+its blocked downstream flow, so the overall run is canceled. The deliberate-failure
+workflow is failed, as expected. LE reported its run orchestration as successful
+while the application execution failed. Neither top-level status replaces the
+required-application verdict.
 
-The initial repository inventory had one branch, no tags, no additional collaborators
-and no queued workflows. A generated update branch is now pending review. The execution export contains only hosted CI and the
-manual live workflow. There are no PR, pull_request_target, workflow_run or
-reusable-workflow entry points, and no caches. Handoff artifacts are selected by
-the same workflow run and attempt and checked against separately passed hashes.
-Review new refs and workflow changes before bringing the runner online.
+Raw responses and screenshot pixels remain private. The public artifacts contain
+only the allowlisted projection. The screenshot was decoded and its relationships
+and hash verified; it is not approved for public display without a separate visual
+privacy review. GitHub artifacts have limited retention; private downloaded copies
+and digest records are preserved for audit.
 
-The existing approval contract is unchanged. Protected-main PR review authorizes
-publishing a generated execution copy. The protected environment authorizes
-simulated promotion, and the handoff additionally requires authoritative approval
-time evidence bound to repository, run, attempt, environment and reviewer.
-The environment currently permits the operator to review their own workflow.
-Neither that setting nor the parser requires a second independent human. The
-independent requirement in the time-evidence contract concerns authoritative
-provenance, not a second person's identity. Missing timestamp evidence remains
-a separate blocker even when the operator authorizes promotion. No alternate
-approval-request PR mechanism is included.
+## Approval boundaries
 
-## Live boundary still open
+Protected-main PR review governs publishing the generated execution copy. The
+protected environment governs human authorization of simulated promotion. The
+existing handoff parser additionally requires an authoritative timestamp bound to
+repository, workflow run, attempt, environment and reviewer.
 
-Target DNS matches the historical address. TCP/5986, normal TLS validation and the
-WSMan endpoint respond, including an unauthenticated Negotiate challenge.
-Default authenticated WSMan requests stalled in ordinary and elevated client contexts.
-An explicit per-session `NoProxyServer` selection established an authenticated
-session and read the expected target identity. No firewall, certificate validation,
-authentication policy or reboot change was needed. This identifies the working
-connection setting; it does not establish the underlying proxy-discovery failure.
+The configured environment permits the operator to review their own workflow.
+Neither that setting nor the parser requires a second independent human. Independent
+time-evidence provenance does not mean an independent person's identity. Two GitHub
+accounts owned by one person do not establish independent human review. No additional
+collaborator was granted access, no approval-request PR mechanism was introduced,
+and no environment or branch protection was bypassed.
 
-The operator confirms exclusive target use and a responsive RDP session. The LE
-logon bootstrapper was stopped in that manual session to allow inspection, and
-the operator signed out afterward. The operator subsequently observed the bootstrapper
-start on another login and signed out. A fresh native session query confirmed no
-logged-on users. A passing workload is still needed to establish end-to-end readiness.
+The environment button alone cannot supply the missing timestamp provenance.
+Job-start time, observation time and an operator-written timestamp are not substitutes.
+The good-update issue was therefore left open, and promotion and its Continuous Test
+handoff remain unaccepted. The operator's general authorization to test is not a
+fabricated per-run approval record.
 
-The most recent appliance read confirmed the designated test identities, no
-unfinished Application Test runs and disabled Continuous Testing. An active
-session belonged to another test and was left alone. The fresh authenticated
-preflight verified version 23.01 and the recorded baseline executable hash, no
-disabled executable copy, idle Windows Installer, and the expected cached installers.
-Designated tests were idle, Continuous Testing was disabled, and all recorded locks
-were available. Existing journals retain baseline restoration, a reverted lease and
-recoveryRequired=false. Refresh these observations before a later mutation.
+## Execution setup findings
 
-A subsequent baseline Application Test finished with zero sessions and zero
-application executions. Its Events reported `launcherCapacityExceeded`; the
-designated launcher group's only member was offline. The gate returned
-INCONCLUSIVE (`results-incomplete`). This is not an application PASS or FAIL, and
-does not verify bootstrapper readiness. Post-run preflight confirmed the baseline,
-idle designated tests, drained target, disabled Continuous Testing and released
-locks. The unrelated appliance session was left unchanged.
+The operator chose a temporary supervised laptop runner under a dedicated non-admin
+account. Real processes under that account could not enumerate the everyday profile,
+SSH/configuration directories or either control checkout tree, and could not read
+the original encrypted lab credential files or Git configuration. Account-specific
+deny entries were needed on the checkout roots because their prior ACLs allowed
+Authenticated Users to modify files.
 
-After the operator brought that launcher online, a new designated Application
-Test passed. Post-workload checks again verified the baseline and drained state.
-This establishes fresh end-to-end workload readiness, beyond the manual RDP
-observation. Both supported shells passed 150 source tests, lint, and synthetic
-bundle checks; static workflow/action-pin checks also passed.
+The runner shared the original canonical state directory and received access only
+to that state and a new evidence directory. Path safety checks walk parent directories,
+so the account also needed non-inherited attribute/traversal rights on those parents.
+Those grants did not permit directory listing or reading credentials; the denial
+probes passed again afterward. All temporary grants were journaled for cleanup.
+This remains a shared Windows host, not VM isolation.
 
-No live Actions run, new mutation, simulated promotion, issue lifecycle or
-Continuous Test handoff is claimed by this checkpoint. Preserve the original
-[local walkthrough](tested-lab-walkthrough.md) and distinguish its results from
-the pending Actions acceptance.
+The reviewed execution workflows have no PR, pull_request_target, workflow_run or
+reusable-workflow entry points and no caches. Hosted CI uses hosted runners. Live
+execution requires the exact repository and main ref. Pinned actions, read-only
+default permissions, protected main/environment, concurrency and artifact checks
+remain intact. A controller-owned pre-job guard additionally restricted the runner
+to one run, attempt, execution SHA, workflow, actor, validation job and input set.
+It rejected synthetic alternate-ref, trigger, SHA, job and attempt mismatches in
+both supported shells. One-job registration bounded lifetime; it was not treated
+as an isolation mechanism.
 
-## Bounded execution and closeout
+Authenticated WinRM stalled for the control account until an explicit per-session
+`NoProxyServer` setting was selected. Normal TLS checks remained enabled. The
+runner account authenticated with its default proxy selection. The optional source
+fix applies the explicit choice consistently to installer checks and adapter
+operations, including recovery; see [setup](setup.md#target-powershell-remoting).
 
-Before registration, prove the temporary account's access limits and trusted
-runtime prerequisites. Use the existing canonical durable state, never a parallel
-empty lease store. Give the runner only the specific state/evidence access it
-needs; do not copy the operator's DPAPI store or grant general profile access.
-Supply only reviewed runtime credentials and keep the runner online during the
-supervised window. Labels and temporary registration do not enforce trust.
+The first Actions attempt failed during checkout, before configuration or target
+mutation. A launched process must use the dedicated account's HOME, USERPROFILE,
+APPDATA, LOCALAPPDATA, TEMP and PowerShell module paths. Explicitly setting those
+paths resolved the checkout failure without exposing the control profile. The
+failed setup attempt is retained as [run 35925205462](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35925205462).
 
-Keep recovery supervision outside the workflow with the original pinned inputs
-and credential store. Workflow cancellation or timeout is not proof that an
-installer, test or session stopped. Observe natural completion within the agreed
-bound, disable and drain designated Continuous Testing, and restore only after
-idle state is established. Verify baseline file/version/hash and fresh workloads
-after each scenario. Preserve recovery-required state on uncertainty.
+A pre-dispatch baseline workload also exposed an offline assigned launcher. LE
+returned launcherCapacityExceeded with zero application executions, and the gate
+returned INCONCLUSIVE. After the existing launcher was brought online, a fresh
+baseline workload passed and drained. Manual RDP responsiveness alone was not used
+as proof of bootstrapper readiness. Unrelated tests and sessions were left unchanged.
 
-When finished, or blocked without imminent continuation, stop and unregister the
-runner. Remove task-created runtime secrets, the temporary account credential,
-account and its specific ACL entries. Preserve private evidence, original recovery
-credentials, leases and journals through the independent audit. Do not remove
-recovery access while recovery is outstanding.
+## Recovery and closeout
 
-## Product requirements supported by these findings
+The public validation command does not automatically restore after every verdict.
+Recovery supervision ran in a separate control process with the original credentials
+and byte-matched runtime inputs. It observed validation, terminated remaining workflow
+work, checked natural test/session completion and installer idle state, restored the
+baseline, and required a fresh passing workload. Cancellation was never used as proof
+that guest sessions had drained. Uncertainty retained recovery-required status.
 
-The reference supplies deterministic application verdicts, evidence integrity,
-sanitized publication, durable leases and separate handoff records. It does not
-provide a resident recovery supervisor, secure runner lifecycle, an approval UI,
-or automatic workload observation after enabling continuous scheduling.
+Both scenario journals reached restoration-verified with recoveryRequired=false.
+The final designated state is the 23.01 baseline, executable present, disabled copy
+absent, Application Tests finished, Continuous Testing disabled and sessions drained.
+No production deployment or snapshot restoration occurred.
 
-A native product would need durable orchestration outside a disposable execution
-worker, an approval decision bound to immutable evidence with native audit time,
-credential delivery and revocation, session-aware recovery, bootstrapper readiness
-checks, and explicit observation of continuous workload outcomes. These are product
-requirements, not capabilities proven by the current reference.
+The one-job runners deregistered. Live workflow dispatch was disabled again, and all
+eight task-created runtime secrets and five variables were removed. Original private
+recovery credentials, evidence and journals remain available through the independent
+audit. Local cleanup verified removal of the temporary account, profile, runner
+directory, account password file and every journaled account-specific ACL entry.
+
+The source fix passed 150 tests in PowerShell 5.1 and 7, lint in both shells, synthetic
+PASS/FAIL/INCONCLUSIVE bundle verification and static workflow/pin checks. Its hosted
+[source CI](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/actions/runs/35922822624)
+also passed. These checks do not turn the blocked approval flow into accepted behavior.
+
+## Product requirements grounded in this pass
+
+The reference provides application verdicts, immutable evidence checks, allowlisted
+publication, durable target leases and separate handoff records. A native product
+would need an approval decision with a native immutable audit timestamp; launcher
+availability/capacity checks before mutation; secure worker identity and credential
+lifecycle; and recovery supervision that survives worker failure.
+
+It should expose orchestration status and application outcomes separately, explain
+infrastructure INCONCLUSIVE results without requiring raw-log inspection, observe an
+actual Continuous Test workload after enabling scheduling, and keep issue closure
+aligned with the stages that completed. Temporary runner labels and registration
+must not be presented as a security boundary. These are product requirements, not
+capabilities newly proven by this reference.

@@ -1,7 +1,7 @@
 # Runbook
 
 The [one-off Actions checkpoint](one-off-actions-acceptance.md) records temporary
-runner access checks, current remoting limitations and cleanup obligations. Keep
+runner access checks, tested remoting settings and cleanup obligations. Keep
 recovery supervision outside the workflow; an `always()` step cannot cover loss
 of the runner process or host.
 
