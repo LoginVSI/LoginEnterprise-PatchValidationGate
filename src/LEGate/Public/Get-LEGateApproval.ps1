@@ -7,7 +7,8 @@ function Get-LEGateApproval {
         [ValidatePattern('^\d+$')][string]$WorkflowRunId,
         [ValidateRange(1, 2147483647)][int]$WorkflowRunAttempt,
         [string]$Environment = 'promotion-approval',
-        [object]$TimeEvidence, [string]$CapturePath
+        [object]$TimeEvidence, [string]$CapturePath,
+        [string]$ExpectedManifestHash, [string]$ExecutionCommit
     )
     $reviews = @(Invoke-LEGateGitHubRequest -Method GET -Path ('/actions/runs/' + $WorkflowRunId + '/approvals'))
     if ($CapturePath) { Write-LEGateJson -Path $CapturePath -Value @{ reviews = $reviews; timeEvidence = $TimeEvidence; workflowRunId = $WorkflowRunId; workflowRunAttempt = $WorkflowRunAttempt; observedAt = ConvertTo-LEGateTimestamp -Value (Get-LEGateUtcNow) } }
@@ -16,6 +17,9 @@ function Get-LEGateApproval {
     if ($matching.Count -ne 1) { throw 'Approval history is absent or ambiguous.' }
     $reviewer = $matching[0].user.login
     if ([string]::IsNullOrWhiteSpace($reviewer)) { throw 'Reviewer identity is unavailable.' }
+    if ($TimeEvidence -and $TimeEvidence.kind -ceq 'github-pull-request-approval') {
+        return Get-LEGatePullRequestApproval -WorkflowRunId $WorkflowRunId -WorkflowRunAttempt $WorkflowRunAttempt -Environment $Environment -Pointer $TimeEvidence -Reviewer $reviewer -EnvironmentReviews $reviews -ExpectedManifestHash $ExpectedManifestHash -ExecutionCommit $ExecutionCommit -CapturePath $CapturePath
+    }
     # GitHub REST approval history documents no approval timestamp. Environment
     # created_at/updated_at are NOT approval times. Never substitute the initiator.
     if ($WorkflowRunAttempt -lt 1 -or $null -eq $TimeEvidence -or $TimeEvidence.kind -ne 'github-approval-time-evidence' -or

@@ -1,5 +1,9 @@
 # User setup
 
+For the temporary supervised runner exercise, see the
+[one-off acceptance checkpoint](one-off-actions-acceptance.md). Its access checks
+and remaining live blockers are separate from the historical local acceptance.
+
 The [offline example](../README.md#start-here) needs only a checkout and Windows PowerShell 5.1 or PowerShell 7 on Windows. Pester, PSScriptAnalyzer, Python and PyYAML are contributor tools, not runtime prerequisites. No generated SDK or PSLoginEnterprise module is used.
 
 ## Prepare Login Enterprise

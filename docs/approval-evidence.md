@@ -1,6 +1,10 @@
 # Approval-time evidence prerequisite
 
-Rechecked for the local acceptance wrap-up on 2026-09-22: authoritative acquisition is blocked externally. The repository implements bounded file delivery and conservative correlation checks. It does not authenticate an operator-written envelope or turn matching fields into proof of approval.
+The environment-button timestamp remains unavailable through the reviewed APIs.
+An additional supported path now reads a separate pull-request approval decision
+directly from GitHub. Its timestamp means review submission, not environment
+approval. Live acceptance of that path is still pending. The legacy envelope path
+still requires an independently verified authoritative producer.
 
 The official [REST review-history documentation](https://docs.github.com/en/rest/actions/workflow-runs#get-the-review-history-for-a-workflow-run) supplies reviewer, state and environments, but no approval timestamp or attempt binding. Environment creation/update times describe the environment. The [GraphQL DeploymentReview fields](https://docs.github.com/en/graphql/reference/deployments#deploymentreview) likewise provide no approval timestamp; deployment-status creation time is not review time.
 
@@ -46,5 +50,63 @@ and attempt, environment, exact validation manifest hash and execution commit.
 It must verify reviewer authorization, reject dismissed or superseded decisions,
 and retain the source API response. Keep the environment protection as an
 additional gate. Approval-request PRs must never execute on the lab runner.
-The current parser does not implement this alternative, and no actual decision
-or correlated approval record has been acquired in the public setup pass.
+The parser now implements this alternative. No actual correlated decision has
+yet been acquired in live Actions acceptance.
+
+### Prepare the decision
+
+After validation publishes a real PASS, create a data-only PR in the execution
+repository. Keep it open and do not merge it. The branch must belong to that same
+repository, target `main`, and contain `.acceptance/approval-request.json`:
+
+```json
+{
+  "kind": "legate-promotion-approval-request",
+  "repository": "owner/execution-repository",
+  "workflowRunId": "123",
+  "workflowRunAttempt": 1,
+  "environment": "promotion-approval",
+  "executionCommit": "FULL_40_CHARACTER_EXECUTION_SHA",
+  "validationManifestSha256": "EXACT_64_CHARACTER_VALIDATION_MANIFEST_HASH",
+  "decision": "approve-simulated-promotion"
+}
+```
+
+These are placeholders, not evidence. Copy the execution commit and attempt from
+the actual workflow and the manifest hash from its independently recorded output.
+The reviewer must inspect the sanitized bundle and request. They must have write,
+maintain or admin permission and be distinct from the PR author. Do not create a
+nominal second identity to approve your own request. An authorized collaborator
+or separately authorized service can author the request; the human reviewer
+performs the approval. Authoring permission is an external prerequisite when only
+one account has write access.
+
+Have the human approve the PR at its exact head commit, then approve the protected
+`promotion-approval` environment with the same GitHub identity. Before releasing
+the environment, atomically deliver this pointer at the private path configured
+by `LE_APPROVAL_TIME_EVIDENCE`:
+
+```json
+{
+  "kind": "github-pull-request-approval",
+  "pullRequestNumber": 7,
+  "requestCommit": "FULL_40_CHARACTER_REVIEWED_REQUEST_SHA"
+}
+```
+
+The pointer supplies no trusted time or reviewer. The consumer reads the committed
+request through the contents API at that SHA, verifies the workflow attempt through
+the Actions API, pages PR reviews, and reads current reviewer permissions. It
+requires the latest review by the environment reviewer to be APPROVED at the same
+commit. Dismissed decisions, subsequent comments or change requests, changed PR
+heads, foreign branches, closed/draft PRs and incomplete history fail closed.
+It retains source responses privately and records `submitted_at` as the approval
+decision time. The record labels its source `github-pull-request-review` and
+timestamp meaning `pull-request-review-submitted`. The environment timestamp is
+not inferred. Permissions need contents, actions and pull-requests read plus the
+metadata access used by the collaborator-permission endpoint.
+
+Use a fresh request and pointer for each run attempt. This protocol reads PR data;
+it never checks out or executes the PR branch. Keep execution-copy PR workflows
+disabled and retain the protected environment. Test the real permission and
+review/dismissal behavior before calling the complete flow accepted.

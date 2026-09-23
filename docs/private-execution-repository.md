@@ -13,7 +13,7 @@ permissions, environment gate, concurrency and evidence guards remain intact.
 The command makes no GitHub calls and refuses to overwrite existing exports.
 
 Later, under separate authorization:
-1. Create the private personal repository with Actions disabled initially.
+1. Select the execution repository visibility deliberately and keep Actions disabled initially. Preserve the visibility of an existing repository.
 2. Review and import the generated files to protected main. Retain the source
    commit record. Never copy local configuration, credential stores or captures.
 3. Configure an isolated Windows runner, private durable state/evidence roots,
@@ -24,7 +24,7 @@ Later, under separate authorization:
 
 For each update, export a fresh reviewed development commit for the same exact
 execution repository. Review the generated diff and import it through the
-private repository's protected update process. Put implementation fixes back
+execution repository's protected update process. Put implementation fixes back
 in the development repository, then regenerate. Do not edit divergent copies.
 
 Local acceptance does not validate GitHub environments, runner isolation,

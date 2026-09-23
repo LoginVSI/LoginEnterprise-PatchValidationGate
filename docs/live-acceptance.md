@@ -1,5 +1,12 @@
 # Live acceptance
 
+Current continuation status: the original private records and credentials are
+available, and a temporary non-admin account passed actual access-denial checks.
+Authenticated target remoting remains blocked. The runner is unregistered and
+live Actions acceptance remains pending. See the [one-off checkpoint](one-off-actions-acceptance.md)
+for the exact verified scope and recovery requirements. The setup-pass narrative
+below describes the earlier machine, not the recovered original laptop.
+
 The 2026-09-23 public Actions setup pass found an empty execution repository and
 verified separate personal administration credentials. Its current machine has no
 previous private handoff or recovery material, and no isolated runner access route

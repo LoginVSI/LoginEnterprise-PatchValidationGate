@@ -208,4 +208,13 @@ Promotion adds simulated: true, provenance and approval provenance. Manual time 
 
 Later promotion, continuous, restoration and handoff-error records are separate from immutable validation. Continuous records link validationManifestSha256. The workflow passes both validation and promotion hashes independently between jobs. Reporting/handoff failure does not rewrite verdict.json. Restore failure requires recovery even if the original validation passed.
 
+The API-backed PR decision is an alternative manual approval source. It records
+`source: github-pull-request-review`, a `timestampMeaning` of
+`pull-request-review-submitted`, the review ID and reviewed request commit. Its
+`approvedAt` comes from GitHub's review `submitted_at`; it does not claim an
+environment-button timestamp. The request binds the exact validation manifest,
+execution commit, repository, run, attempt and environment. See
+[approval evidence](approval-evidence.md) for author/reviewer prerequisites and
+the pointer format. Environment review remains a separate required gate.
+
 Continuous handoff records now include schedulingEnabled. The legacy alreadyRunning field means scheduling was already enabled when checked; neither field proves an active or successful workload session. The internal continuous-running lease stage records handoff completion with the same limitation. Production integration extensions must verify genuine deployment success before handoff and cannot reuse simulated promotion as that proof.

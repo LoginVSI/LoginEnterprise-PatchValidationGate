@@ -105,6 +105,7 @@ jobs:
     permissions:
       contents: read
       actions: read
+      pull-requests: read
       issues: write
     outputs:
       promotion_hash: ${{ steps.promote.outputs.promotion_hash }}

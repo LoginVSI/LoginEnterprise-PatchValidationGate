@@ -1,5 +1,19 @@
 # Implementation progress
 
+## Original-laptop continuation, 2026-09-23
+
+Recovered private originals, restored the clean public execution checkout and
+verified its current controls. A temporary non-admin account passed real profile,
+credential and control-checkout denial checks. No runner registration or live
+mutation occurred. Authenticated WinRM remains unresolved despite successful
+TCP/TLS and an unauthenticated Negotiate challenge.
+
+The API-backed PR approval decision passes 154 tests in each supported shell,
+including eight new approval cases. Lint is clean in both shells; static workflow,
+action-pin and evidence-artifact checks pass. Existing hosted CI was reused rather
+than repeated for a machine change. New source changes still require normal review
+and a regenerated execution export. See the [one-off checkpoint](one-off-actions-acceptance.md).
+
 ## Public Actions setup, 2026-09-23
 
 The source main commit was rechecked as `67f126b4b8127702fe8cb07e6029644486f2267e`.

@@ -30,7 +30,7 @@ try {
             if (-not $env:LE_PRIVATE_ROOT) { throw 'Private approval capture root is required.' }
             if ($WorkflowRunAttempt -notmatch '^[1-9][0-9]*$') { throw 'Workflow run attempt is required.' }
             $time = Wait-LEGateApprovalEvidence -Path $ApprovalTimeEvidencePath
-            $approval = Get-LEGateApproval -WorkflowRunId $WorkflowRunId -WorkflowRunAttempt ([int]$WorkflowRunAttempt) -TimeEvidence $time -CapturePath (Join-Path $env:LE_PRIVATE_ROOT ('approval-' + [guid]::NewGuid().ToString('N') + '.json'))
+            $approval = Get-LEGateApproval -WorkflowRunId $WorkflowRunId -WorkflowRunAttempt ([int]$WorkflowRunAttempt) -TimeEvidence $time -ExpectedManifestHash $ExpectedManifestHash -ExecutionCommit $env:GITHUB_SHA -CapturePath (Join-Path $env:LE_PRIVATE_ROOT ('approval-' + [guid]::NewGuid().ToString('N') + '.json'))
         }
         $record = Write-LEGatePromotionRecord -BundlePath $BundlePath -ExpectedManifestHash $ExpectedManifestHash -BundleName $BundleName -Policy $policy -Mode $Mode -Approval $approval -Timestamp (Get-LEGateTimestamp) -OutputPath (Join-Path -Path $OutputPath -ChildPath 'promotion-record.json') -StateRoot $StateRoot -Target $Target
         Add-LEGateChangeComment -IssueNumber $IssueNumber -Stage promotion -Outcome succeeded

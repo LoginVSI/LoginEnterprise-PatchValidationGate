@@ -1,5 +1,11 @@
 # Tested local lab walkthrough
 
+The historical results below remain valid within their recorded scope. The
+[2026-09-23 Actions continuation](one-off-actions-acceptance.md) recovered their
+private originals and verified temporary-account access restrictions. It has not
+yet completed live Actions acceptance or refreshed the guest baseline. Do not
+present the historical screens as evidence of a GitHub workflow execution.
+
 Local acceptance on 2026-09-22 used LE 6.8.6, the v8-preview API, PowerShell 7, and a disposable Windows target over HTTPS/5986 with explicit Negotiate credentials and normal certificate validation. Private configuration and DPAPI credentials stayed outside the checkout and OneDrive. The public module does not depend on that credential store.
 
 ## Observed sequence

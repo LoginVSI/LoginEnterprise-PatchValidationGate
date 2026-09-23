@@ -20,10 +20,15 @@ function Write-LEGatePromotionRecord {
     if ($checked.verdict.promotionMode -ne $Mode) { throw 'Promotion mode differs from approved evidence.' }
     $approvalProjection = $null
     if ($Mode -eq 'manual') {
-        if ($null -eq $Approval -or $Approval.source -ne 'github-review-history' -or
+        if ($null -eq $Approval -or $Approval.source -notin @('github-review-history', 'github-pull-request-review') -or
             $Approval.approvedBy -notmatch '^[A-Za-z0-9_-]{1,100}$' -or -not $Approval.approvedAt -or -not $Approval.timeEvidence) { throw 'Authoritative manual approval is required.' }
         $by = $Approval.approvedBy; $at = $Approval.approvedAt
-        $approvalProjection = @{ source = 'github-review-history'; workflowRunId = $Approval.workflowRunId; workflowRunAttempt = $Approval.workflowRunAttempt; environment = 'promotion-approval'; timeEvidenceSha256 = Get-LEGateTextHash -Text (ConvertTo-Json -InputObject $Approval.timeEvidence -Depth 20 -Compress) }
+        if ($Approval.source -ceq 'github-pull-request-review') {
+            if ($Approval.timeEvidence.kind -cne 'github-pull-request-review-evidence' -or
+                $Approval.timeEvidence.validationManifestSha256 -cne $checked.manifestSha256) { throw 'Approval decision does not bind this validation.' }
+        }
+        $approvalProjection = @{ source = $Approval.source; workflowRunId = $Approval.workflowRunId; workflowRunAttempt = $Approval.workflowRunAttempt; environment = 'promotion-approval'; timeEvidenceSha256 = Get-LEGateTextHash -Text (ConvertTo-Json -InputObject $Approval.timeEvidence -Depth 20 -Compress) }
+        if ($Approval.source -ceq 'github-pull-request-review') { $approvalProjection.timestampMeaning = 'pull-request-review-submitted'; $approvalProjection.reviewId = $Approval.timeEvidence.reviewId; $approvalProjection.requestCommit = $Approval.timeEvidence.requestCommit }
     }
     else { $by = 'policy'; $at = $Timestamp }
     if ($at -notmatch '^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(\.\d{3})?Z$') { throw 'Approval timestamp unavailable.' }
