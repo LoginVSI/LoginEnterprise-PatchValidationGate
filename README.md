@@ -4,7 +4,7 @@ Use existing Login Enterprise workloads to check a Windows lab change before dec
 
 You receive a **PASS, FAIL or INCONCLUSIVE verdict**, application results, a readable summary and an integrity-checked JSON evidence bundle. Private captures retain native LE responses and failure screenshots. Approval, simulated promotion and continuous-test handoff have separate records; they cannot rewrite validation.
 
-**Preview: targets the v8-preview API. End-to-end live acceptance is pending.** A historical version call was verified against LE 6.8.6; the complete gate has not been accepted against that appliance. The reviewed [OpenAPI snapshots](docs/api/README.md) establish API versions, not appliance provenance. v7 is a comparison reference, not a compatibility claim.
+**Preview: targets the v8-preview API. Local lab acceptance is verified against LE 6.8.6.** The supported validation path produced a passing update and a deliberate application failure, with independently verified restoration after each. A separate bounded Continuous Test check executed workloads, disabled scheduling and verified session drain. GitHub Actions, authoritative approval acquisition and promotion remain unaccepted. See the [tested walkthrough](docs/tested-lab-walkthrough.md). The reviewed [OpenAPI snapshots](docs/api/README.md) establish API versions, not appliance provenance. v7 is a comparison reference, not a compatibility claim.
 
 ## Start here
 

@@ -1,4 +1,4 @@
-function Get-LEGateAllPages {
+﻿function Get-LEGateAllPages {
     <# .SYNOPSIS
     Collects strict result-set pages and optionally records private page provenance.
     #>
@@ -10,7 +10,8 @@ function Get-LEGateAllPages {
         [ValidateRange(1, 10000)][int]$MaxPages = 500,
         [ValidateSet('envelope', 'array')][string]$Envelope = 'envelope',
         [switch]$ArrayTerminationConfirmed,
-        [string]$CaptureRoot
+        [string]$CaptureRoot,
+        [datetime]$Deadline
     )
     if (-not $Query.ContainsKey('count') -or [int]$Query.count -lt 1) { throw 'Paging requires count in -Query.' }
     $items = New-Object Collections.ArrayList
@@ -22,7 +23,10 @@ function Get-LEGateAllPages {
         $q.offset = $offset
         $q.includeTotalCount = $true
         try {
-            $response = Invoke-LEGateRequest -Session $Session -Method GET -Path $Path -Query $q
+            $requestArgs = @{ Session = $Session; Method = 'GET'; Path = $Path; Query = $q }
+            if ($PSBoundParameters.ContainsKey('Deadline')) { $requestArgs.Deadline = $Deadline }
+            $response = Invoke-LEGateRequest @requestArgs
+            if ($PSBoundParameters.ContainsKey('Deadline') -and (Get-LEGateUtcNow) -ge $Deadline) { throw (New-Object TimeoutException('Paging deadline exhausted.')) }
             if ($CaptureRoot) {
                 Write-LEGateJson -Path (Join-Path -Path $CaptureRoot -ChildPath ('page-{0:D4}.json' -f $page)) -Value @{
                     endpoint = $Path; query = $q; response = $response; capturedAt = ConvertTo-LEGateTimestamp -Value (Get-LEGateUtcNow)

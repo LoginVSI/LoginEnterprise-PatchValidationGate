@@ -115,4 +115,13 @@ Describe 'Wait-LEGateRun' {
         $sleeps | Should -Be @(60)
         Should -Invoke -ModuleName LEGate Invoke-RestMethod -Times 1 -Exactly
     }
+
+    It 'honors a configured deadline longer than an hour without a hidden short cap' {
+        $state.sequence = @(@{ state = 'created'; result = $null }, @{ state = 'completed'; result = 'successful' })
+        $clock.stepMinutes = 40
+        $run = Wait-LEGateRun -Session $session -TestRunId 'run-1' -ChangeId 'long-customer-test' -MaxWaitMinutes 90 -PollIntervalSeconds 30 -EvidenceRoot $TestDrive 6>$null
+        $run.state | Should -Be 'completed'
+        $run.timedOut | Should -BeFalse
+        $run.waitedSeconds | Should -BeGreaterThan 3600
+    }
 }

@@ -1,0 +1,496 @@
+{
+  "provenance": "appliance-capture",
+  "complete": true,
+  "run": {
+    "type": "ApplicationTest",
+    "testConfigurationSnapshot": null,
+    "state": "completed",
+    "result": "successful",
+    "appFailureResults": {
+      "successCount": 1,
+      "totalCount": 2
+    },
+    "appPerformanceResults": {
+      "successCount": 0,
+      "totalCount": 0
+    },
+    "properties": [],
+    "id": "00000000-0000-0000-0000-000000000001",
+    "testId": "00000000-0000-0000-0000-000000000002",
+    "testRunName": "captured-deliberate-failure",
+    "created": "2026-06-15T01:25:54.534566Z",
+    "started": "2026-06-15T01:25:54.534566Z",
+    "finished": "2026-06-15T01:26:56.906366Z",
+    "testRunNumber": 5,
+    "isDesktopTestRun": false,
+    "numberOfEvents": null,
+    "comment": "sanitized-comment"
+  },
+  "overview": {
+    "applicationTestResult": [
+      {
+        "testRunId": "00000000-0000-0000-0000-000000000001",
+        "testName": "application-acceptance",
+        "isBase": true,
+        "counter": 5,
+        "state": "completed",
+        "testResult": "successful",
+        "platformSummary": {
+          "loginSuccessful": true,
+          "loginPerformance": {
+            "duration": 3553.0,
+            "threshold": 40000.0,
+            "durationDifference": null,
+            "thresholdDifference": null,
+            "isSuccessful": true
+          },
+          "latencyPerformance": {
+            "duration": 1.0,
+            "threshold": 150.0,
+            "durationDifference": null,
+            "thresholdDifference": null,
+            "isSuccessful": true
+          }
+        },
+        "applicationSummaries": [
+          {
+            "applicationId": "00000000-0000-0000-0000-000000000003",
+            "applicationName": "Notepad",
+            "resultStatus": "successful",
+            "appExecutionSuccessful": true,
+            "performanceSuccessful": true,
+            "timerResults": [
+              {
+                "timer": "App start time",
+                "performanceResult": {
+                  "duration": 132.0,
+                  "threshold": null,
+                  "durationDifference": null,
+                  "thresholdDifference": null,
+                  "isSuccessful": true
+                }
+              }
+            ],
+            "screenshots": []
+          },
+          {
+            "applicationId": "00000000-0000-0000-0000-000000000004",
+            "applicationName": "Archive application",
+            "resultStatus": "error",
+            "appExecutionSuccessful": false,
+            "performanceSuccessful": null,
+            "timerResults": [],
+            "screenshots": [
+              {
+                "title": null,
+                "uri": "sanitized-uri",
+                "type": "appFailure",
+                "description": "sanitized-description"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "sessions": [
+    {
+      "id": "00000000-0000-0000-0000-000000000005",
+      "testId": "00000000-0000-0000-0000-000000000002",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "created": "2026-06-15T01:25:54.667434Z",
+      "loginState": "succeeded",
+      "sessionState": "completed",
+      "stateLastModified": "2026-06-15T01:26:56.739195Z",
+      "testType": "applicationTest",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "accountName": "sanitized-accountName",
+      "launcherName": "sanitized-launcherName",
+      "loginStartTime": "2026-06-15T01:25:55.851584Z",
+      "loginEndTime": "2026-06-15T01:26:21.405639Z",
+      "sessionEndTime": "2026-06-15T01:26:44.870386Z",
+      "sessionMetricEnabled": false,
+      "properties": null
+    }
+  ],
+  "executions": [
+    {
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "id": "00000000-0000-0000-0000-000000000007",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "applicationId": "00000000-0000-0000-0000-000000000003",
+      "state": "ended",
+      "created": "2026-06-15T01:26:22.172262Z",
+      "lastModified": "2026-06-15T01:26:36.395572Z"
+    },
+    {
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "id": "00000000-0000-0000-0000-000000000008",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "applicationId": "00000000-0000-0000-0000-000000000004",
+      "state": "endedWithErrors",
+      "created": "2026-06-15T01:26:39.421500Z",
+      "lastModified": "2026-06-15T01:26:41.305902Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "00000000-0000-0000-0000-000000000009",
+      "eventType": "testRunStarted",
+      "testType": "applicationTest",
+      "timestamp": "2026-06-15T01:25:54.577524Z",
+      "title": "sanitized-title",
+      "description": null,
+      "secondsFromTestStart": 0,
+      "testId": "00000000-0000-0000-0000-000000000002",
+      "testName": "application-acceptance",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "testRunNumber": 5,
+      "userSessionId": null,
+      "applicationId": null,
+      "applicationName": null,
+      "accountName": null,
+      "launcherName": null,
+      "targetHostName": null,
+      "properties": null
+    },
+    {
+      "id": "00000000-0000-0000-0000-00000000000a",
+      "eventType": "applicationFailure",
+      "testType": "applicationTest",
+      "timestamp": "2026-06-15T01:26:41.279762Z",
+      "title": "sanitized-title",
+      "description": "sanitized-description",
+      "secondsFromTestStart": 46,
+      "testId": "00000000-0000-0000-0000-000000000002",
+      "testName": "application-acceptance",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "testRunNumber": 5,
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "applicationId": "00000000-0000-0000-0000-000000000004",
+      "applicationName": "Archive application",
+      "accountName": "sanitized-accountName",
+      "launcherName": "sanitized-launcherName",
+      "targetHostName": "sanitized-targetHostName",
+      "properties": null
+    },
+    {
+      "id": "00000000-0000-0000-0000-00000000000b",
+      "eventType": "testRunFinished",
+      "testType": "applicationTest",
+      "timestamp": "2026-06-15T01:27:13.346153Z",
+      "title": "sanitized-title",
+      "description": null,
+      "secondsFromTestStart": 78,
+      "testId": "00000000-0000-0000-0000-000000000002",
+      "testName": "application-acceptance",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "testRunNumber": 5,
+      "userSessionId": null,
+      "applicationId": null,
+      "applicationName": null,
+      "accountName": null,
+      "launcherName": null,
+      "targetHostName": null,
+      "properties": null
+    }
+  ],
+  "measurements": [
+    {
+      "measurementId": "connection",
+      "appExecutionId": null,
+      "applicationId": null,
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 2394.0,
+      "timestamp": "2026-06-15T01:26:21.617865Z",
+      "properties": [
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        }
+      ]
+    },
+    {
+      "measurementId": "group_policies",
+      "appExecutionId": null,
+      "applicationId": null,
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 28.0,
+      "timestamp": "2026-06-15T01:26:21.617865Z",
+      "properties": [
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        }
+      ]
+    },
+    {
+      "measurementId": "total_login_time",
+      "appExecutionId": null,
+      "applicationId": null,
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 3553.0,
+      "timestamp": "2026-06-15T01:26:21.617865Z",
+      "properties": [
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        }
+      ]
+    },
+    {
+      "measurementId": "user_profile",
+      "appExecutionId": null,
+      "applicationId": null,
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 7.0,
+      "timestamp": "2026-06-15T01:26:21.617865Z",
+      "properties": [
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        }
+      ]
+    },
+    {
+      "measurementId": "app_start_time",
+      "appExecutionId": "00000000-0000-0000-0000-000000000007",
+      "applicationId": "00000000-0000-0000-0000-000000000003",
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 132.0,
+      "timestamp": "2026-06-15T01:26:27.180129Z",
+      "properties": [
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        }
+      ]
+    },
+    {
+      "measurementId": "latency",
+      "appExecutionId": null,
+      "applicationId": null,
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 1.0,
+      "timestamp": "2026-06-15T01:26:45.806368Z",
+      "properties": [
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        }
+      ]
+    },
+    {
+      "measurementId": "latency_max",
+      "appExecutionId": null,
+      "applicationId": null,
+      "launcherName": "sanitized-launcherName",
+      "accountId": "00000000-0000-0000-0000-000000000006",
+      "testRunId": "00000000-0000-0000-0000-000000000001",
+      "userSessionId": "00000000-0000-0000-0000-000000000005",
+      "duration": 1.0,
+      "timestamp": "2026-06-15T01:26:45.806368Z",
+      "properties": [
+        {
+          "propertyId": "AccountName",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Locale",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "RemotingProtocol",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "Resolution",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "ScaleFactor",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetHost",
+          "value": "sanitized-value"
+        },
+        {
+          "propertyId": "TargetOS",
+          "value": "sanitized-value"
+        }
+      ]
+    }
+  ],
+  "screenshots": [
+    {
+      "runId": "00000000-0000-0000-0000-000000000001",
+      "executionId": "00000000-0000-0000-0000-000000000008",
+      "screenshotId": "app_failure",
+      "path": "00000000-0000-0000-0000-000000000008/21c37a3cf6032dc7ab0b48336058176adfa7a0bf2087234eea7c539fc16ee805.bin"
+    }
+  ],
+  "errors": []
+}

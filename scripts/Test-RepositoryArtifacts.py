@@ -21,6 +21,16 @@ assert set(live["on"]) == {"workflow_dispatch"}
 assert live["concurrency"]["cancel-in-progress"] in (False, "false")
 assert "target_key" in live["concurrency"]["group"]
 assert "github.ref == 'refs/heads/main'" in live["jobs"]["validate"]["if"]
+execution_repository = "LoginVSI/LoginEnterprise-PatchValidationGate"
+export_record = root / "execution-source.json"
+if export_record.exists():
+    export = json.loads(export_record.read_text(encoding="utf-8-sig"))
+    assert export["sourceRepository"] == execution_repository
+    assert re.fullmatch(r"[a-f0-9]{40}", export["sourceCommit"])
+    assert export["allowedRef"] == "refs/heads/main"
+    assert re.fullmatch(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+", export["executionRepository"])
+    execution_repository = export["executionRepository"]
+assert live["jobs"]["validate"]["if"] == f"github.ref == 'refs/heads/main' && github.repository == '{execution_repository}'"
 assert live["jobs"]["promote-manual"]["environment"] == "promotion-approval"
 for mode in ("manual", "auto"):
     condition = live["jobs"]["promote-" + mode]["if"]

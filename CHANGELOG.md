@@ -4,6 +4,10 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+- Verified local update, deliberate failure, independent restoration and bounded Continuous Test execution against LE 6.8.6; added sanitized real-response regressions. GitHub acceptance remains pending.
+- Capture historical run configuration, expose conservative read-only Windows Installer preflight, and add bounded Continuous Test disable/drain with request deadlines.
+- Add pinned-source export preparation for an exact private Actions execution repository without weakening the main-branch restriction.
+
 - Fixed target remoting with configurable HTTP/HTTPS and ports across CLI, adapters, validation, restoration and Actions. HTTPS uses Negotiate with normal certificate validation; legacy HTTP/5985 recovery remains supported.
 
 - Added reviewed v7 and v8-preview static OpenAPI references with explicit provenance and sanitization.

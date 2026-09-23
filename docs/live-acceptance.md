@@ -1,8 +1,10 @@
 # Live acceptance
 
-Status: pending. No live workflow or appliance call was made during the offline implementation.
+Local lab acceptance completed on 2026-09-22 (local date) using LE 6.8.6 and v8-preview over validated TLS. The supported repository validation and revert paths were exercised. See [tested lab walkthrough](tested-lab-walkthrough.md) for scope, recovery behavior and remaining gaps. No GitHub workflow was dispatched and no promotion was performed.
 
-Private capture is conditionally ready for a supervised operator session using [the bootstrap procedure](first-live-capture.md), once exclusive ownership and independent recovery are verified. Full demonstration is not ready: genuine response/installer/restoration acceptance and [authoritative approval-time acquisition](approval-evidence.md) remain prerequisites. Bounded envelope delivery does not establish source provenance.
+Verified privately: recovery from interrupted mutation; good-update PASS; deliberate-break FAIL with native application failure and screenshot bytes; exact baseline file/version/hash and fresh passing workloads after each restoration; Continuous Test workload execution followed by scheduling disablement and observed session drain. The snapshot remains operator-confirmed, not independently inspected or restore-tested.
+
+The full workflow demonstration still requires the following. Local completion does not satisfy GitHub approval or issue-reporting acceptance.
 
 - [ ] Verify isolated runner, protected branch/environment, permissions, shared private state and TLS.
 - [ ] Configure patch-gate-app and patch-gate-continuous for Notepad plus the chosen demo app.
