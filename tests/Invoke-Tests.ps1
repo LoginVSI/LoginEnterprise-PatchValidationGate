@@ -30,7 +30,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $env:LEGATE_TEST_MODE = 'true'
 
-Import-Module -Name Pester -MinimumVersion 5.0.0 -ErrorAction Stop
+Import-Module -Name Pester -RequiredVersion 5.7.1 -ErrorAction Stop
 
 $root = $PSScriptRoot
 $paths = @()

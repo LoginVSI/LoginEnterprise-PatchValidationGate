@@ -54,7 +54,7 @@ Use the [private capture bootstrap](first-live-capture.md) and exporter, which r
 
 ## Development environment and checks
 
-User scenarios need no development dependencies. Contributors need Pester 5 and PSScriptAnalyzer in both supported shells. Inspect existing installations with `Get-Module -ListAvailable Pester,PSScriptAnalyzer`; use `scripts/Initialize-DevEnvironment.ps1` under your approved installation policy if needed. PS7 lint can discover an existing WindowsPowerShell user installation. Do not weaken organizational execution policy.
+User scenarios need no development dependencies. Contributors need Pester 5.7.1 and PSScriptAnalyzer in both supported shells. Inspect existing installations with `Get-Module -ListAvailable Pester,PSScriptAnalyzer`; run `scripts/Initialize-DevEnvironment.ps1` in each shell under your approved installation policy if needed. The test runner pins Pester 5.7.1 because Pester 6 changes filtered-mock fallback behavior. PS7 lint can discover an existing WindowsPowerShell user installation. Do not weaken organizational execution policy.
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy RemoteSigned -File tests/Invoke-Tests.ps1 -Output Normal

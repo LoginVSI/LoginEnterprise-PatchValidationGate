@@ -10,6 +10,6 @@ A durable target lease plus exclusive file lock serializes cooperating operators
 
 Jobs transfer the immutable sanitized artifact and independently pass its manifest hash. Later handoff artifacts remain separate. Manual approval requires reviewer/time provenance; auto mode enforces supported functional guards. No production deployment system is called.
 
-See [recovery](runbook.md), [API assumptions](api-assumptions.md), and [security](security.md). Live behavior remains unverified.
+See [recovery](runbook.md), [API assumptions](api-assumptions.md), and [security](security.md). Local lab validation and restoration are verified as recorded in the [walkthrough](tested-lab-walkthrough.md); Actions acceptance remains pending.
 
 Change detection and invocation belong to the caller. No scanner or resident lifecycle controller is supplied. Native LE Events remain evidence; deterministic code assigns gate verdicts. GitHub issues are optional reporting records. A real deployment integration must confirm its own outcome before continuous handoff. The reference only simulates production promotion and confirms enabled continuous scheduling on readback.

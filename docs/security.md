@@ -16,6 +16,13 @@ Follow [GitHub secure-use guidance](https://docs.github.com/en/actions/reference
 
 YAML does not configure external protections. Verify an isolated Windows runner, least-privilege service account, runner-group restrictions to trusted workflows, no untrusted PR/fork access, protected main, promotion-approval reviewers and deployment branches, secret access, maintained Node 20-compatible runner, private storage ACLs and retention.
 
+For a public personal execution repository, use the exporter's explicit
+`-PublicRepository` option and the [public execution setup](private-execution-repository.md#public-execution-copy).
+The generated copy excludes PR-triggered CI because PR authors can change runner
+selection. Organization runner-group restrictions are not available on a personal
+repository. Keep the runner disconnected until isolation and independent recovery
+are established. Public artifacts and logs require review even when secrets are masked.
+
 All operators/runners must use one canonical target alias and shared state location. Locks protect cooperating callers, not arbitrary admins. Cancellation does not prove a target idle. Disable continuous scheduling and drain active sessions in LE before restoration or another mutation.
 
 Local GitHub authentication uses explicit GITHUB_TOKEN and GITHUB_REPOSITORY. Workflow jobs use github.token with declared permissions. GITHUB_ACTOR is the initiator, not the reviewer. Manual approval must retain real reviewer and timestamp evidence.

@@ -4,6 +4,12 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
+- Pin Pester 5.7.1 in setup and the test runner. An unbounded minimum installed Pester 6, whose filtered-mock behavior broke the existing recovery-lock regression.
+
+- Add an explicit public execution export that omits PR-triggered CI, retains main push checks, and records the transformation. Reject the development repository as an export destination regardless of letter case.
+- Document public runner isolation, recovery prerequisites, and secret retirement; correct stale stop-endpoint and local-acceptance statements.
+- Allow manual dispatch of hosted offline CI so an initial import with Actions disabled can be verified after repository protections are configured.
+
 - Verified local update, deliberate failure, independent restoration and bounded Continuous Test execution against LE 6.8.6; added sanitized real-response regressions. GitHub acceptance remains pending.
 - Capture historical run configuration, expose conservative read-only Windows Installer preflight, and add bounded Continuous Test disable/drain with request deadlines.
 - Add pinned-source export preparation for an exact private Actions execution repository without weakening the main-branch restriction.
