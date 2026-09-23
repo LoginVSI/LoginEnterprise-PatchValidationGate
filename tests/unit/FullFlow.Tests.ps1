@@ -169,6 +169,7 @@ public class LEGateSyntheticJob : System.Management.Automation.Job {
     It 'runs apply/verify, collection, PASS, publication, real approval parser, simulated promotion, continuous handoff and issue close' {
         $result = Invoke-LEGateValidation @gateArgs
         $result.verdict | Should -Be 'PASS'
+        @($calls | Where-Object { $_.path -eq '/publicApi/v8-preview/test-runs/synthetic-run' -and $_.query.include -eq 'testRunConfigurationSnapshot' }).Count | Should -BeGreaterThan 0
         $result.exitCode | Should -Be 0
         $bundle = Test-LEGateEvidence -Path $result.privatePath -ExpectedManifestHash $result.manifestSha256
         $bundle.manifest.provenance | Should -Be 'synthetic'

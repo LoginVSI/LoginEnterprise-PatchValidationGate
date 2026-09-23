@@ -1,10 +1,12 @@
 # Approval-time evidence prerequisite
 
-Status on 2026-09-18: authoritative acquisition is blocked externally. The repository implements bounded file delivery and conservative correlation checks. It does not authenticate an operator-written envelope or turn matching fields into proof of approval.
+Rechecked for the local acceptance wrap-up on 2026-09-22: authoritative acquisition is blocked externally. The repository implements bounded file delivery and conservative correlation checks. It does not authenticate an operator-written envelope or turn matching fields into proof of approval.
 
 The official [REST review-history documentation](https://docs.github.com/en/rest/actions/workflow-runs#get-the-review-history-for-a-workflow-run) supplies reviewer, state and environments, but no approval timestamp or attempt binding. Environment creation/update times describe the environment. The [GraphQL DeploymentReview fields](https://docs.github.com/en/graphql/reference/deployments#deploymentreview) likewise provide no approval timestamp; deployment-status creation time is not review time.
 
 The documented [workflows.approve_workflow_job audit event](https://docs.github.com/en/organizations/keeping-your-organization-secure/managing-security-settings-for-your-organization/audit-log-events-for-your-organization#workflows) includes timestamp, actor, repository and workflow-run fields, but its listed fields do not establish environment/run-attempt correlation. No organization access or actual matching response has been verified. The [deployment_review webhook](https://docs.github.com/en/webhooks/webhook-events-and-payloads#deployment_review) is available to GitHub Apps with deployment read permission; its listed since field does not document approval-time semantics. We cannot assume those semantics or introduce a speculative collector.
+
+A personal execution repository does not supply organization audit access. No authorized live webhook capture or trusted producer was available in this pass. Local PASS/FAIL acceptance therefore leaves this boundary unchanged and fail-closed.
 
 ## What must be established
 

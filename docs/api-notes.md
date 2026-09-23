@@ -1,4 +1,4 @@
-# Login Enterprise Public API notes
+﻿# Login Enterprise Public API notes
 
 The reviewed [v8-preview snapshot](api/login-enterprise-v8-preview.openapi.json) is the implementation target. All paths below are relative to its `/publicApi` server and `/v8-preview` path prefix. Connect-LEGate accepts an HTTPS origin only; Invoke-LEGateRequest appends both prefixes exactly once. API selection is explicit through LE_API_VERSION or -ApiVersion, never automatic.
 
@@ -29,7 +29,7 @@ Each row names a path under `paths` in the v8-preview snapshot. Referenced schem
 | GET /test-runs/{testRunId}/app-executions/{appExecutionId}/screenshots/{screenshotId} | Binary string schema. The export labels it application/json; retain downloaded bytes without JSON decoding. Actual media type/content and ID syntax need capture confirmation. |
 | GET /user-sessions/active | ActiveUserSessionResultSet; required count, optional testTypes/direction. Read continuous sessions and match testId client-side before mutation; disabled scheduling alone is not proof of drained sessions. |
 
-Continuous handoff uses the same existing-test start endpoint, checks the returned ID and reads the test again to confirm isEnabled. This confirms enabled scheduling, not that a workload session is already running or that future iterations will pass. If enablement cannot be observed, handoff fails closed and requires investigation before retrying. No stop/disable endpoint is implemented; operators use the LE UI.
+Continuous handoff uses the same existing-test start endpoint, checks the returned ID and reads the test again to confirm isEnabled. This confirms enabled scheduling, not that a workload session is already running or that future iterations will pass. If enablement cannot be observed, handoff fails closed and requires investigation before retrying. Stop-LEGateContinuousTest uses the documented stop endpoint, verifies disabled scheduling and separately waits for observed sessions to drain.
 
 ## Completeness and Events
 
@@ -48,3 +48,14 @@ Response profile version 2 adds overviewRuns/overviewRunId, selects fields withi
 Before selecting a later version, privately export its matching spec, review paths/authentication/parameters/enums/compositions/paging and binary responses against this inventory, adapt mappings and code where supported, and run offline contract regressions plus genuine success/failure/restore acceptance. A spec-derived profile is a starting point, not capture-confirmed provenance. See [remaining assumptions](api-assumptions.md).
 
 GitHub approval-time acquisition remains independently blocked as described in [approval evidence](approval-evidence.md). Neither the LE spec nor bounded approval-file delivery resolves that prerequisite.
+
+## Bounded continuous stop and drain
+
+The reviewed v8-preview specification defines PUT /tests/{testId}/stop with
+no request body and a 204 response. Stop-LEGateContinuousTest resolves only an
+existing Continuous Test, sends that write once when enabled, confirms disabled
+scheduling by GET /tests/{testId}, and polls /user-sessions/active until no
+sessions belong to that test. It does not infer drained sessions from scheduling
+alone. Unknown session identities and deadline expiry fail closed.
+
+The run exporter requests include=testRunConfigurationSnapshot (TestRunInclude) to preserve the historical workload. The response field is testConfigurationSnapshot; historical workload application IDs use appId, unlike current configuration applicationId. An omitted snapshot is not proof of an empty historical workload.

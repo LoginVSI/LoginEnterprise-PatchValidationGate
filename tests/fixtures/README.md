@@ -1,6 +1,6 @@
 # Genuine appliance fixtures
 
-No genuine captures are committed here. This directory is reserved for reviewed examples captured from LE. Synthetic inputs live separately in tests/synthetic.
+Reviewed derivatives of genuine LE 6.8.6 success and deliberate-failure captures are in [sanitized-live](sanitized-live/README.md). Original responses and screenshot binaries remain private. Synthetic inputs live separately in tests/synthetic.
 
 Use scripts/Export-LiveCapture.ps1 with a supplied run ID and a new private output path. Retain original responses, request/page metadata, screenshots and restoration observations privately. Confirm shapes against the matching spec.
 

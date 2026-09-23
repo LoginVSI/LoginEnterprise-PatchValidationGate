@@ -1,5 +1,17 @@
 # Implementation progress
 
+## Local acceptance, 2026-09-22
+
+The supported repository orchestrator produced PASS for the pinned application update and FAIL for the deliberately broken executable. Revert completed after each, with independent baseline file/version/hash checks and fresh passing LE workloads. Recovery from the earlier interrupted mutation completed before new scenarios. A bounded Continuous Test check observed both required applications, disabled scheduling and verified session drain. Final state was the baseline version with no active sessions and the target lease reverted; historical records and lock files were retained.
+
+Genuine sanitized success/failure derivatives now cover observed identities, native execution failures and screenshot relationships. Public additions include conservative Installer state inspection, historical configuration export and bounded Continuous Test stop/drain. The live path used PowerShell 7 and explicit HTTPS remoting with normal validation. Windows PowerShell 5.1 remains an offline-tested runtime, not a claim of a second live execution.
+
+GitHub workflow execution, issue lifecycle, environment approvals, authoritative approval-time acquisition and simulated promotion remain pending. No runner registration, private repository creation, push, workflow dispatch or snapshot restore occurred. See [walkthrough](tested-lab-walkthrough.md) and [private execution preparation](private-execution-repository.md).
+
+Final checks: 144 offline tests passed with zero failures/skips in each of Windows PowerShell 5.1 and PowerShell 7. The final export/fixture test edits passed a targeted five-test rerun in both shells. Full PSScriptAnalyzer lint reported no findings in either shell. Workflow YAML/action pins/guard checks, skill artifact integrity and whitespace checks passed. The public fixture review found no retained lab identifiers; original binaries remain private.
+
+## Historical checks
+
 Target remoting fix verified on 2026-09-22. TargetTransport and TargetPort now reach Invoke-Command through the CLI, all standalone adapter wrappers, validation and restoration. HTTPS uses Negotiate and normal certificate validation, independently of appliance TLS. New leases retain the selected settings; legacy leases can recover over explicitly selected HTTPS without changing identity or bypassing recovery confirmation.
 
 Windows PowerShell 5.1.26100.9444 and PowerShell 7.6.6 each passed 132 offline tests with zero failures or skips, and full PSScriptAnalyzer lint with no findings. Synthetic PASS, FAIL and INCONCLUSIVE bundles verified in both shells. Static workflow/skill artifact checks and whitespace checks passed. Coverage includes actual remoting arguments, environment and wrapper propagation, custom ports, HTTPS failure without fallback, legacy recovery, connection mismatch rejection and existing restoration locks. No appliance contact, target mutation, runner registration or workflow dispatch was performed. Live acceptance remains pending.

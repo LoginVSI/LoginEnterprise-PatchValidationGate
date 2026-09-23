@@ -14,7 +14,7 @@ function Export-LEGateRunResult {
         try {
             $folder = Resolve-LEGatePath -Root $OutputPath -RelativePath $kind
             switch ($kind) {
-                'run' { $value = Invoke-LEGateRequest -Session $Session -Method GET -Path ('/test-runs/' + $TestRunId) }
+                'run' { $value = Invoke-LEGateRequest -Session $Session -Method GET -Path ('/test-runs/' + $TestRunId) -Query @{ include = 'testRunConfigurationSnapshot' } }
                 'overview' { $value = Get-LEGateRunOverview -Session $Session -TestRunId $TestRunId -BaselineRunId $BaselineRunId }
                 'sessions' { $value = @(Get-LEGateRunSession -Session $Session -TestRunId $TestRunId -ListProfile $ResponseMap.lists.sessions -CaptureRoot $folder) }
                 'executions' { $value = @(Get-LEGateRunAppExecution -Session $Session -TestRunId $TestRunId -UserSessions $capture.sessions -ResponseMap $ResponseMap -CaptureRoot $folder) }

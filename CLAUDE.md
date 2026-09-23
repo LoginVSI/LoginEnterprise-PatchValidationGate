@@ -10,4 +10,4 @@ Shared contributor instructions for Codex and Claude. Read [README](README.md), 
 - Use centralized logging, timestamps and reason codes. Add meaningful offline regression coverage and run tests/lint in both supported shells.
 - Maintain the read-only boundary of [.agents/skills/evidence-explainer/SKILL.md](.agents/skills/evidence-explainer/SKILL.md). Customer prompts are in [Explain evidence](docs/explain-evidence.md).
 
-Production promotion is simulated. End-to-end live acceptance and authoritative approval-time acquisition remain pending. [Live acceptance](docs/live-acceptance.md) and [implementation progress](docs/implementation-progress.md) contain the public prerequisites and current verification status.
+Production promotion is simulated. Local lab validation, restoration and bounded Continuous Test execution are verified; GitHub workflow acceptance and authoritative approval-time acquisition remain pending. [Live acceptance](docs/live-acceptance.md) and [implementation progress](docs/implementation-progress.md) contain the public prerequisites and current verification status.

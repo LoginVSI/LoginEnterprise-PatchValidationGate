@@ -94,3 +94,11 @@ if ($LASTEXITCODE -ne 0) { throw 'Inspect restoration and reporting records befo
 ```
 
 Verify restoration independently. Interrupted work follows the [recovery runbook](runbook.md#recovery); do not delete its lease or invent a fresh ID to bypass recovery. For GitHub orchestration, publication and approval prerequisites, continue with the [runbook](runbook.md#github-actions) and [security settings](security.md).
+
+## Installer readiness and private execution
+
+Before mutation, under exclusive target ownership and the same lifecycle lock, call
+`Get-LEGateInstallerState -Target validation-target.example.test -TargetTransport HTTPS -TargetPort 5986 -Credential $credential`.
+Require `safeToInstall` to be true. This explicit read-only preflight is not automatically run by the adapter. A remaining msiexec service process alone does not mean an installation is active. Unknown state, client processes or an in-progress marker block work; do not kill them to pass preflight.
+
+See the [tested lab walkthrough](tested-lab-walkthrough.md) for restoration and installer-source limits. To prepare a personal private Actions copy from a pinned development commit, use [private execution repository](private-execution-repository.md). No credential store is required by the public module; interactive credentials remain supported.

@@ -80,3 +80,40 @@ Both promotion jobs now require LE_STATE_ROOT and LE_TARGET. Promotion holds the
 ## Evidence explainer
 
 Use [Explain existing evidence](explain-evidence.md) for Codex discovery, explicit Claude loading and copy/paste prompts. The skill stays read-only; structural checks do not establish model compliance.
+
+## Workload deadlines
+
+The policy's execution.maxWaitMinutes controls the application workload wait;
+execution.pollIntervalSeconds controls polling. Both accept integers from 1 to
+3600. The default policy waits up to 45 minutes. For a customer workload that
+needs over an hour, configure a suitable budget such as 90 minutes before
+starting the change. The deadline is not inferred from a short lab workload.
+
+A polling timeout does not stop an LE test or prove the target is idle. Preserve
+the run ID and lease, inspect the actual run/session state, and allow natural
+completion or use a separately authorized recovery procedure. Never restore
+under an active workload. Installer and HTTP request timeouts are separate
+limits and do not replace the workload deadline.
+
+## Installer and Continuous Test troubleshooting
+
+Do not diagnose an active installation from an msiexec process count alone.
+`Get-LEGateInstallerState` reads Windows Installer service state, accepted stop
+controls, service/client PIDs and the in-progress marker. Require safeToInstall
+under exclusive target ownership immediately before mutation. Busy or unknown
+observations block work. Never kill processes, stop the service or erase recovery
+records to satisfy this preflight.
+
+If a scenario fails after mutation, keep the original change ID, lease, manifest,
+profile and connection settings. Check the actual run and all target sessions
+first. Restore with the reviewed original inputs after the target is idle, then
+verify the executable independently and run a fresh workload. Adapter success
+alone does not verify restoration. A failed restoration blocks later scenarios.
+
+For an authorized existing Continuous Test, use
+`Stop-LEGateContinuousTest -Session $session -Name $continuousTestName -MaxDrainMinutes 15 -PollIntervalSeconds 15`.
+This disables scheduling and separately waits for that test's sessions to drain.
+Its timeout does not authorize target mutation. Inspect other tests and sessions
+as well. Retain the stop result and observations with the recovery record.
+The [tested walkthrough](tested-lab-walkthrough.md) describes what was verified
+locally and the separate GitHub acceptance gaps.

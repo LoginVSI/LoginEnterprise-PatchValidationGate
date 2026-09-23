@@ -48,7 +48,7 @@ Run everything before you push:
 
 ## Fixtures
 
-No genuine fixtures are committed yet. `tests/fixtures/` is reserved for reviewed real captures; `tests/synthetic/` holds labeled synthetic inputs. The naming and sanitization rules are in `tests/fixtures/README.md`. In short: no hostnames, no account names, no tokens; review identifying IDs too; keep the shape exactly as the appliance sent it.
+`tests/fixtures/sanitized-live/` contains reviewed derivatives of genuine success and deliberate-failure captures; `tests/synthetic/` holds labeled synthetic inputs. The naming and sanitization rules are in `tests/fixtures/README.md`. In short: no hostnames, no account names, no tokens; review identifying IDs too; keep the shape exactly as the appliance sent it.
 
 Use the [private capture bootstrap](first-live-capture.md) and exporter, which retain page traces and binary evidence. Review sanitized copies separately from originals before proposing any public fixture. Reviewers should inspect fixture diffs line by line.
 
