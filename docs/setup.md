@@ -63,6 +63,17 @@ Configure a WinRM HTTPS listener on the disposable target and allow TCP 5986 fro
 
 Target remoting is separate from appliance TLS. LE_SKIP_CERT_CHECK controls only appliance requests; it never changes target certificate validation. The adapter has no certificate bypass and never retries HTTPS over HTTP. Do not add TrustedHosts entries or enable Basic authentication to work around connection failures.
 
+If TCP/TLS and `/wsman` respond but authenticated remoting stalls, compare a bounded
+session with an explicit proxy choice. Set `LE_TARGET_PROXY_ACCESS_TYPE=NoProxyServer`
+only when direct target access is intended. This fixed the observed acceptance
+client stall without changing the listener, firewall or certificate validation.
+The optional setting also accepts `IEConfig`, `WinHttpConfig` and `AutoDetect`;
+unset preserves the platform default. An explicit choice bounds connection opening
+to 30 seconds, disables connection retries and redirects, and retains all TLS checks.
+It applies to installer preflight and adapter remoting, including direct module
+calls and restoration. Set the same value in the independent recovery process.
+Actions reads the repository variable `LE_TARGET_PROXY_ACCESS_TYPE`.
+
 Invoke-Gate.ps1 reads LE_TARGET_TRANSPORT and LE_TARGET_PORT. Explicit -TargetTransport and -TargetPort parameters override their respective environment values. Without configuration, HTTP/5985 remains the compatibility default for existing environments; HTTPS defaults to 5986 when no port is supplied. Set both values explicitly for repeatable operation. HTTP is intended for existing trusted domain remoting environments using Negotiate. Custom ports from 1 through 65535 are supported.
 
 The adapters/change/*.ps1 wrappers and direct Invoke-LEGateValidation and Invoke-LEGateChangeAdapter calls accept the same parameters but do not read these environment variables. Pass -TargetTransport HTTPS -TargetPort 5986 explicitly, including standalone restoration. Keep the same settings for apply, verify, resume and revert.

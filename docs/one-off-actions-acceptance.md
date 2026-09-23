@@ -21,42 +21,68 @@ ACLs allowed Authenticated Users to modify files. Those temporary rules are
 journaled for removal. This is restricted use of a shared Windows host, not VM
 isolation. The runner has not been registered or given runtime credentials.
 
-Current repository inventory has one branch, no tags, no additional collaborators
-and no queued workflows. The execution export contains only hosted CI and the
+A bounded read-only probe under the temporary account authenticated to the target
+with normal TLS and the default WSMan proxy selection. Its PowerShell child needed
+machine module paths instead of the control account's inherited module paths.
+Target credentials were supplied in process memory for that probe and were not
+copied from the private credential store onto the runner filesystem.
+
+The initial repository inventory had one branch, no tags, no additional collaborators
+and no queued workflows. A generated update branch is now pending review. The execution export contains only hosted CI and the
 manual live workflow. There are no PR, pull_request_target, workflow_run or
 reusable-workflow entry points, and no caches. Handoff artifacts are selected by
 the same workflow run and attempt and checked against separately passed hashes.
 Review new refs and workflow changes before bringing the runner online.
 
-The approval implementation now supports a separately identified PR review over
-an immutable acceptance request. It reads the reviewer, reviewed commit and
-submission timestamp from GitHub, validates the run/attempt/environment and exact
-validation manifest, and retains source responses. It still requires the protected
-environment. The environment button's timestamp is not inferred. Offline tests
-cover success, identity mismatches, changed requests, dismissed/superseded reviews,
-permissions, incomplete history and restricted API paths. Real approval acquisition
-remains unaccepted until an actual correlated review is obtained.
+The existing approval contract is unchanged. Protected-main PR review authorizes
+publishing a generated execution copy. The protected environment authorizes
+simulated promotion, and the handoff additionally requires authoritative approval
+time evidence bound to repository, run, attempt, environment and reviewer.
+The environment currently permits the operator to review their own workflow.
+Neither that setting nor the parser requires a second independent human. The
+independent requirement in the time-evidence contract concerns authoritative
+provenance, not a second person's identity. Missing timestamp evidence remains
+a separate blocker even when the operator authorizes promotion. No alternate
+approval-request PR mechanism is included.
 
 ## Live boundary still open
 
 Target DNS matches the historical address. TCP/5986, normal TLS validation and the
 WSMan endpoint respond, including an unauthenticated Negotiate challenge.
-Authenticated WSMan requests stall in both ordinary and elevated client contexts.
-Bounded diagnostics were stopped without changing firewall, certificate checks,
-authentication policy or rebooting the target. Target-side logs are needed before
-choosing a remedy; connectivity alone does not establish authentication success.
+Default authenticated WSMan requests stalled in ordinary and elevated client contexts.
+An explicit per-session `NoProxyServer` selection established an authenticated
+session and read the expected target identity. No firewall, certificate validation,
+authentication policy or reboot change was needed. This identifies the working
+connection setting; it does not establish the underlying proxy-discovery failure.
 
 The operator confirms exclusive target use and a responsive RDP session. The LE
 logon bootstrapper was stopped in that manual session to allow inspection, and
-the operator signed out afterward. Verify session drain and next-login bootstrapper
-readiness before any workload. Do not infer either from successful RDP access.
+the operator signed out afterward. The operator subsequently observed the bootstrapper
+start on another login and signed out. A fresh native session query confirmed no
+logged-on users. A passing workload is still needed to establish end-to-end readiness.
 
 The most recent appliance read confirmed the designated test identities, no
 unfinished Application Test runs and disabled Continuous Testing. An active
-session belonged to another test and was left alone. Current target executable,
-installer state, session drain and bootstrapper readiness have not yet been
-verified. Historical journals retain baseline restoration, a reverted lease and
-recoveryRequired=false; those records are not a fresh guest observation.
+session belonged to another test and was left alone. The fresh authenticated
+preflight verified version 23.01 and the recorded baseline executable hash, no
+disabled executable copy, idle Windows Installer, and the expected cached installers.
+Designated tests were idle, Continuous Testing was disabled, and all recorded locks
+were available. Existing journals retain baseline restoration, a reverted lease and
+recoveryRequired=false. Refresh these observations before a later mutation.
+
+A subsequent baseline Application Test finished with zero sessions and zero
+application executions. Its Events reported `launcherCapacityExceeded`; the
+designated launcher group's only member was offline. The gate returned
+INCONCLUSIVE (`results-incomplete`). This is not an application PASS or FAIL, and
+does not verify bootstrapper readiness. Post-run preflight confirmed the baseline,
+idle designated tests, drained target, disabled Continuous Testing and released
+locks. The unrelated appliance session was left unchanged.
+
+After the operator brought that launcher online, a new designated Application
+Test passed. Post-workload checks again verified the baseline and drained state.
+This establishes fresh end-to-end workload readiness, beyond the manual RDP
+observation. Both supported shells passed 150 source tests, lint, and synthetic
+bundle checks; static workflow/action-pin checks also passed.
 
 No live Actions run, new mutation, simulated promotion, issue lifecycle or
 Continuous Test handoff is claimed by this checkpoint. Preserve the original

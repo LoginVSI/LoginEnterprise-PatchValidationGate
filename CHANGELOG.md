@@ -4,7 +4,7 @@ All notable changes to this project are recorded here. The format follows [Keep 
 
 ## [Unreleased]
 
-- Verify a separate PR approval decision against GitHub source responses, the reviewed request commit, execution commit, run attempt, environment reviewer and validation hash. Preserve environment protection and label the review timestamp accurately. Live acceptance remains pending.
+- Add optional per-session target WSMan proxy selection for authenticated connection stalls. Keep normal TLS checks and use the same selection for installer checks, validation and restoration.
 
 - Pin Pester 5.7.1 in setup and the test runner. An unbounded minimum installed Pester 6, whose filtered-mock behavior broke the existing recovery-lock regression.
 

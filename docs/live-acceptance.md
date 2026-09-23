@@ -2,7 +2,8 @@
 
 Current continuation status: the original private records and credentials are
 available, and a temporary non-admin account passed actual access-denial checks.
-Authenticated target remoting remains blocked. The runner is unregistered and
+Authenticated target remoting and fresh baseline preflight now pass with an explicit
+direct proxy choice. The runner is unregistered and
 live Actions acceptance remains pending. See the [one-off checkpoint](one-off-actions-acceptance.md)
 for the exact verified scope and recovery requirements. The setup-pass narrative
 below describes the earlier machine, not the recovered original laptop.

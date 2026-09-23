@@ -1,11 +1,5 @@
 # Specification facts and live acceptance gaps
 
-The PR approval decision path uses GitHub's documented review `submitted_at` and
-`commit_id`, contents-at-ref, workflow-attempt and collaborator-permission APIs.
-These establish the source fields; live Actions token permissions, actual human
-review and delivery remain unverified. The environment review is still required,
-and its button timestamp is not claimed. See [approval evidence](approval-evidence.md).
-
 The reviewed [v8-preview snapshot](api/login-enterprise-v8-preview.openapi.json) establishes the contracts summarized in [API notes](api-notes.md). All local references have been resolved for review. Genuine LE 6.8.6 success, deliberate-failure and restoration captures are now reviewed. Sanitized derivatives are in tests/fixtures/sanitized-live; originals remain private.
 
 The example profile uses spec-derived selectors and envelopes. A live profile needs `provenance: capture-confirmed` and `confirmedFrom` identifying reviewed private captures. That is an operator attestation, not automated proof. Never change synthetic provenance to bypass preflight.

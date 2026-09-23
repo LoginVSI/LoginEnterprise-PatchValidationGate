@@ -5,11 +5,7 @@ function Invoke-LEGateGitHubRequest {
     [CmdletBinding()]
     param([ValidateSet('GET', 'POST', 'PATCH')][string]$Method, [string]$Path, [object]$Body)
     if ([string]::IsNullOrWhiteSpace($env:GITHUB_TOKEN) -or $env:GITHUB_REPOSITORY -notmatch '^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$') { throw 'GitHub credentials/repository are not configured.' }
-    $existingPath = $Path -match '^/(issues|actions/runs)(/|\?|$)'
-    $approvalRead = $Method -ceq 'GET' -and ($Path -match '^/pulls/[1-9][0-9]*(/reviews\?per_page=100&page=[1-9][0-9]*)?$' -or
-        $Path -match '^/contents/\.acceptance/approval-request\.json\?ref=[a-f0-9]{40}$' -or
-        $Path -match '^/collaborators/[A-Za-z0-9_-]{1,100}/permission$')
-    if ((-not $existingPath -and -not $approvalRead) -or $Path -match '\.\.|[\r\n]') { throw 'Unsupported GitHub request path.' }
+    if ($Path -notmatch '^/(issues|actions/runs)(/|\?|$)' -or $Path -match '\.\.|[\r\n]') { throw 'Unsupported GitHub request path.' }
     $script:LEGateSecrets += $env:GITHUB_TOKEN
     $requestArgs = @{
         Uri = 'https://api.github.com/repos/' + $env:GITHUB_REPOSITORY + $Path

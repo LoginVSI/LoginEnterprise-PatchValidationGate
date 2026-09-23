@@ -48,6 +48,8 @@
     else {
         $requestArgs = @{ ComputerName = $Target; UseSSL = ($TargetTransport -eq 'HTTPS'); Port = $TargetPort; Authentication = 'Negotiate'; ScriptBlock = $query; AsJob = $true; ErrorAction = 'Stop' }
         if ($Credential) { $requestArgs.Credential = $Credential }
+        $sessionOption = Get-LEGateTargetSessionOption
+        if ($sessionOption) { $requestArgs.SessionOption = $sessionOption }
         $job = Invoke-Command @requestArgs
         try {
             if (-not (Wait-Job -Job $job -Timeout 120)) { Stop-Job -Job $job; throw 'Installer state query timed out.' }

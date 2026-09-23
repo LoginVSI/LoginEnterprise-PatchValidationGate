@@ -5,14 +5,14 @@
 Recovered private originals, restored the clean public execution checkout and
 verified its current controls. A temporary non-admin account passed real profile,
 credential and control-checkout denial checks. No runner registration or live
-mutation occurred. Authenticated WinRM remains unresolved despite successful
-TCP/TLS and an unauthenticated Negotiate challenge.
+mutation occurred. Authenticated WinRM now succeeds with an explicit direct
+per-session proxy choice. Fresh preflight verified the baseline hash/version,
+idle target and designated tests, disabled Continuous Testing, and released locks.
 
-The API-backed PR approval decision passes 154 tests in each supported shell,
-including eight new approval cases. Lint is clean in both shells; static workflow,
-action-pin and evidence-artifact checks pass. Existing hosted CI was reused rather
-than repeated for a machine change. New source changes still require normal review
-and a regenerated execution export. See the [one-off checkpoint](one-off-actions-acceptance.md).
+The optional remoting proxy setting retains normal TLS checks. Approval uses the
+existing environment and authoritative time-evidence contract; no additional PR
+approval mechanism is included. New source changes require normal review and a
+regenerated execution export. See the [one-off checkpoint](one-off-actions-acceptance.md).
 
 ## Public Actions setup, 2026-09-23
 
