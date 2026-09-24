@@ -47,7 +47,7 @@ try {
         if ([regex]::Matches($ci, $trigger).Count -ne 1) { throw 'Reviewed pull-request CI trigger is absent or ambiguous.' }
         $ci = [regex]::Replace($ci, $trigger, '')
         [IO.File]::WriteAllText($ciPath, $ci, (New-Object Text.UTF8Encoding($false)))
-        $transformation += ' Public execution copy omits pull-request CI; push CI on main is retained.'
+        $transformation += ' Public execution copy omits pull-request CI; hosted push CI on main and chore/sync-* branches is retained.'
     }
     [ordered]@{ sourceRepository = 'LoginVSI/LoginEnterprise-PatchValidationGate'; sourceCommit = $SourceCommit.ToLowerInvariant(); executionRepository = $Repository; allowedRef = 'refs/heads/main'; publicRepository = [bool]$PublicRepository; generatedAt = [DateTime]::UtcNow.ToString('o'); transformation = $transformation } |
         ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'execution-source.json') -Encoding utf8
