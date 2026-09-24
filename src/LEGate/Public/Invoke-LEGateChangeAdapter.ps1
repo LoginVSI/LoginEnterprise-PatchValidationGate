@@ -34,6 +34,8 @@ function Invoke-LEGateChangeAdapter {
                 $block = (Get-Command -Name Invoke-LEGateAdapterWorker).ScriptBlock
                 $requestArgs = @{ ComputerName = $Target; ScriptBlock = $block; ArgumentList = @($Operation, $Adapter, $Parameters, $TimeoutSeconds); AsJob = $true; ErrorAction = 'Stop'; UseSSL = ($TargetTransport -eq 'HTTPS'); Port = $TargetPort; Authentication = 'Negotiate' }
                 if ($Credential) { $requestArgs.Credential = $Credential }
+                $sessionOption = Get-LEGateTargetSessionOption
+                if ($sessionOption) { $requestArgs.SessionOption = $sessionOption }
                 $job = Invoke-Command @requestArgs
                 try {
                     if (-not (Wait-Job -Job $job -Timeout ($TimeoutSeconds * 3 + 30))) { Stop-Job -Job $job; throw 'Remote adapter timeout.' }

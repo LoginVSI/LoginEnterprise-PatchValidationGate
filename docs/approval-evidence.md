@@ -1,5 +1,13 @@
 # Approval-time evidence prerequisite
 
+The 2026-09-23 Actions pass retained this contract. The configured environment
+allows the operator to authorize their own workflow; the parser does not require
+a second independent human. Protected-main PR review is a separate publication
+requirement. Neither substitutes for authoritative approval-time provenance.
+No new approval-request PR flow was introduced. Validation and recovery passed,
+but the blocked downstream flow was canceled rather than supplied invented time
+evidence. See the [acceptance record](one-off-actions-acceptance.md).
+
 Rechecked for the local acceptance wrap-up on 2026-09-22: authoritative acquisition is blocked externally. The repository implements bounded file delivery and conservative correlation checks. It does not authenticate an operator-written envelope or turn matching fields into proof of approval.
 
 The official [REST review-history documentation](https://docs.github.com/en/rest/actions/workflow-runs#get-the-review-history-for-a-workflow-run) supplies reviewer, state and environments, but no approval timestamp or attempt binding. Environment creation/update times describe the environment. The [GraphQL DeploymentReview fields](https://docs.github.com/en/graphql/reference/deployments#deploymentreview) likewise provide no approval timestamp; deployment-status creation time is not review time.

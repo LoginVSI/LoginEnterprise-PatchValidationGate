@@ -18,8 +18,12 @@ YAML does not configure external protections. Verify an isolated Windows runner,
 
 For a public personal execution repository, use the exporter's explicit
 `-PublicRepository` option and the [public execution setup](private-execution-repository.md#public-execution-copy).
-The generated copy excludes PR-triggered CI because PR authors can change runner
-selection. Organization runner-group restrictions are not available on a personal
+The generated copy excludes PR-triggered CI, but a pull request can add its own
+workflow targeting the runner's labels. Do not leave a self-hosted runner registered
+on a public repository outside a supervised window; require approval for workflows
+from outside collaborators; and gate every job with a pre-job check of repository,
+ref, SHA, workflow ref, event, actor and job. Record the fork-PR approval setting
+with the other GitHub controls. Organization runner-group restrictions are not available on a personal
 repository. Keep the runner disconnected until isolation and independent recovery
 are established. Public artifacts and logs require review even when secrets are masked.
 

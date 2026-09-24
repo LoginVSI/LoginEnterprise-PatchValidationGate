@@ -31,4 +31,14 @@
         (Get-LEGateInstallerState -Target target.invalid -TargetTransport HTTPS -TargetPort 5986 -Credential $credential).safeToInstall | Should -BeTrue
         Should -Invoke -ModuleName LEGate Invoke-Command -Times 1 -Exactly -ParameterFilter { $UseSSL -and $Port -eq 5986 -and $Authentication -eq 'Negotiate' -and $Credential.UserName -eq 'synthetic-user' }
     }
+    It 'passes the explicit direct proxy option to installer preflight' {
+        $savedProxy = $env:LE_TARGET_PROXY_ACCESS_TYPE
+        try {
+            $env:LE_TARGET_PROXY_ACCESS_TYPE = 'NoProxyServer'
+            Mock -ModuleName LEGate Invoke-Command { Start-Job -ScriptBlock { [pscustomobject]@{ querySucceeded = $true; state = 'Stopped'; serviceProcessId = 0; processIds = @(); inProgressRegistry = $false } } }
+            (Get-LEGateInstallerState -Target target.invalid -TargetTransport HTTPS -UseCurrentCredentials).safeToInstall | Should -BeTrue
+            Should -Invoke -ModuleName LEGate Invoke-Command -Times 1 -Exactly -ParameterFilter { [string]$SessionOption.ProxyAccessType -eq 'NoProxyServer' -and -not $SessionOption.SkipCACheck -and $UseSSL }
+        }
+        finally { $env:LE_TARGET_PROXY_ACCESS_TYPE = $savedProxy }
+    }
 }

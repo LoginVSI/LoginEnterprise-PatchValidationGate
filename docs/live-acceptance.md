@@ -1,17 +1,28 @@
 # Live acceptance
 
+Current status: live Actions PASS/FAIL validation and independent restoration are
+verified. The separate 2026-09-24 UTC automatic-mode acceptance verified simulated
+promotion, Actions Continuous Test scheduling handoff and scenario issue closure.
+Its initial login was interrupted by private supervision; a bounded controller-started
+workload continuation passed after restoration. The lab finished on verified 23.01,
+Continuous Testing disabled, sessions drained and recovery-required false. Temporary
+runner access and runtime secrets were removed. Manual approval-time provenance
+remains blocked. See the [acceptance record](one-off-actions-acceptance.md).
+The setup-pass narrative below describes the earlier machine and is historical.
+
 The 2026-09-23 public Actions setup pass found an empty execution repository and
-verified separate personal administration credentials. Its current machine has no
+verified separate personal administration credentials. That setup session initially had no
 previous private handoff or recovery material, and no isolated runner access route
-has been supplied. Public export hardening does not satisfy the live checklist.
-Do not dispatch mutations until those inputs, independent recovery supervision
-and authoritative approval acquisition are established.
+had been supplied. Public export hardening does not satisfy the live checklist.
+Those missing inputs were recovered in the later continuation. New installations
+still need verified recovery and runner controls. Manual promotion additionally
+requires authoritative approval-time evidence; automatic mode uses its policy guards.
 
 Local lab acceptance completed on 2026-09-22 (local date) using LE 6.8.6 and v8-preview over validated TLS. The supported repository validation and revert paths were exercised. See [tested lab walkthrough](tested-lab-walkthrough.md) for scope, recovery behavior and remaining gaps. No GitHub workflow was dispatched and no promotion was performed.
 
 Verified privately: recovery from interrupted mutation; good-update PASS; deliberate-break FAIL with native application failure and screenshot bytes; exact baseline file/version/hash and fresh passing workloads after each restoration; Continuous Test workload execution followed by scheduling disablement and observed session drain. The snapshot remains operator-confirmed, not independently inspected or restore-tested.
 
-The full workflow demonstration still requires the following. Local completion does not satisfy GitHub approval or issue-reporting acceptance.
+Use the following checklist for a new installation. Its manual-approval items remain separate from the automatic-mode results above.
 
 - [ ] Verify isolated runner, protected branch/environment, permissions, shared private state and TLS.
 - [ ] Configure patch-gate-app and patch-gate-continuous for Notepad plus the chosen demo app.

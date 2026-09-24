@@ -71,6 +71,7 @@ jobs:
           LE_TARGET: ${{ secrets.LE_TARGET }}
           LE_TARGET_TRANSPORT: ${{ vars.LE_TARGET_TRANSPORT }}
           LE_TARGET_PORT: ${{ vars.LE_TARGET_PORT }}
+          LE_TARGET_PROXY_ACCESS_TYPE: ${{ vars.LE_TARGET_PROXY_ACCESS_TYPE }}
           TARGET_USER: ${{ secrets.TARGET_USER }}
           TARGET_PASSWORD: ${{ secrets.TARGET_PASSWORD }}
           LE_STATE_ROOT: ${{ vars.LE_STATE_ROOT }}

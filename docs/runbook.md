@@ -1,5 +1,10 @@
 # Runbook
 
+The [one-off Actions checkpoint](one-off-actions-acceptance.md) records temporary
+runner access checks, tested remoting settings and cleanup obligations. Keep
+recovery supervision outside the workflow; an `always()` step cannot cover loss
+of the runner process or host.
+
 ## Offline checks
 
 Try scripts/Invoke-OfflineScenario.ps1 as shown in [user setup](setup.md). Contributors run the full suites and lint in both shells using [contributor instructions](contributing.md). FullFlow.Tests exercises real orchestration, collectors, normalization, evaluator, exporter, publication, approval parser and handoff while replacing external HTTP/remoting boundaries. Synthetic examples alone are narrower than these tests.

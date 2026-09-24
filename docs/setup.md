@@ -1,5 +1,9 @@
 # User setup
 
+For the temporary supervised runner exercise, see the
+[one-off acceptance checkpoint](one-off-actions-acceptance.md). Its access checks
+and remaining live blockers are separate from the historical local acceptance.
+
 The [offline example](../README.md#start-here) needs only a checkout and Windows PowerShell 5.1 or PowerShell 7 on Windows. Pester, PSScriptAnalyzer, Python and PyYAML are contributor tools, not runtime prerequisites. No generated SDK or PSLoginEnterprise module is used.
 
 ## Prepare Login Enterprise
@@ -58,6 +62,21 @@ API selection is explicit. Before changing versions, follow the [version assessm
 Configure a WinRM HTTPS listener on the disposable target and allow TCP 5986 from the runner. Its server certificate must be valid, match the DNS name used in LE_TARGET (for example, validation-target.example.test), and chain to a CA trusted by the runner account. Check the listener and trust from that account before validation. Use explicit credentials with permission to run the adapter on the target. The gate uses Negotiate authentication.
 
 Target remoting is separate from appliance TLS. LE_SKIP_CERT_CHECK controls only appliance requests; it never changes target certificate validation. The adapter has no certificate bypass and never retries HTTPS over HTTP. Do not add TrustedHosts entries or enable Basic authentication to work around connection failures.
+
+If TCP/TLS and `/wsman` respond but authenticated remoting stalls, compare a bounded
+session with an explicit proxy choice. Set `LE_TARGET_PROXY_ACCESS_TYPE=NoProxyServer`
+only when direct target access is intended. An explicit NoProxyServer session option
+resolved the observed control-account stall. During acceptance that option was
+applied by the private supervisor to the executed revision; this helper has been
+live-checked only through a read-only installer-state query. Adapter apply and
+revert through the helper are covered offline. Listener, firewall and certificate
+validation settings were unchanged.
+The optional setting also accepts `IEConfig`, `WinHttpConfig` and `AutoDetect`;
+unset preserves the platform default. An explicit choice bounds connection opening
+to 30 seconds, disables connection retries and redirects, and retains all TLS checks.
+It applies to installer preflight and adapter remoting, including direct module
+calls and restoration. Set the same value in the independent recovery process.
+Actions reads the repository variable `LE_TARGET_PROXY_ACCESS_TYPE`.
 
 Invoke-Gate.ps1 reads LE_TARGET_TRANSPORT and LE_TARGET_PORT. Explicit -TargetTransport and -TargetPort parameters override their respective environment values. Without configuration, HTTP/5985 remains the compatibility default for existing environments; HTTPS defaults to 5986 when no port is supplied. Set both values explicitly for repeatable operation. HTTP is intended for existing trusted domain remoting environments using Negotiate. Custom ports from 1 through 65535 are supported.
 
