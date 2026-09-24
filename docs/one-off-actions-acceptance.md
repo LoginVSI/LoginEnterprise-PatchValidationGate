@@ -19,9 +19,9 @@ and did not replace protected execution main during the exercise.
 | Sanitized artifacts | Verified: both downloaded ZIPs match GitHub SHA-256 digests; manifests, private-evidence backlinks and private-value scans pass | [PASS artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35925744830/artifacts/10779011660), [FAIL artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35926329590/artifacts/10779940069) |
 | Restoration after each scenario | Verified: 23.01 executable/version/hash, no disabled copy, fresh required-application PASS and drained sessions | Separate private supervision and readiness records |
 | Failure issue | Verified open; promotion and Continuous Testing skipped | [Issue #4](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/issues/4) |
-| Good-update issue closure | Blocked: validation passed, but downstream approval/promotion/handoff did not complete | [Issue #3 remains open](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/issues/3) |
-| Authoritative approval evidence and simulated promotion | Blocked: no verified authoritative approval-time producer satisfies the existing correlation contract | [Approval evidence](approval-evidence.md) |
-| Actions Continuous Test handoff and new iteration | Blocked by promotion; no downstream start was attempted | Earlier independent local workload observations remain in the [local walkthrough](tested-lab-walkthrough.md) |
+| Good-update issue closure | Not exercised: the validate-only runner could not execute promotion/handoff | [Issue #3 remains open](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/issues/3) |
+| Manual approval and manual simulated promotion | Blocked: no verified authoritative approval-time producer satisfies the existing correlation contract; runner access was also validate-only | [Approval evidence](approval-evidence.md) |
+| Actions Continuous Test handoff and new iteration | Not exercised: promotion did not complete and the runner allowed validation only | Earlier independent local workload observations remain in the [local walkthrough](tested-lab-walkthrough.md) |
 | Protected execution-copy publication | Pending normal source and protected-main PR review | [Source PR #3](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/pull/3), [source PR #4](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/pull/4), [generated-copy PR #2](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/pull/2) |
 
 The good workflow's validation job succeeded. The independent supervisor canceled
@@ -37,6 +37,21 @@ privacy review. GitHub artifacts have limited retention; private downloaded copi
 and digest records are preserved for audit.
 
 ## Approval boundaries
+
+The supervised runner authorized only the validate job and deregistered after one
+job, so promotion and continuous jobs could not have run in this configuration even
+with approval evidence. The promotion-approval environment did hold the manual
+promotion job pending review. No approval was given.
+
+The existing automatic path is separate: a fresh validation must bind auto mode,
+pass both required applications and produce complete integrity-checked evidence.
+Promotion requires identical policy bytes, the supported verdict:PASS and
+results-complete guards, an issue record and the matching shared target lease.
+The workflow then schedules validate, promote-auto and continuous-testing in that
+order; promote-manual is skipped. All three required jobs need scoped runner access,
+and recovery supervision must allow the handoff before stopping scheduling,
+draining sessions and restoring the baseline. Automatic-mode acceptance does not
+establish manual-approval provenance.
 
 Protected-main PR review governs publishing the generated execution copy. The
 protected environment governs human authorization of simulated promotion. The
@@ -85,8 +100,12 @@ as an isolation mechanism.
 Authenticated WinRM stalled for the control account until an explicit per-session
 `NoProxyServer` setting was selected. Normal TLS checks remained enabled. The
 runner account authenticated with its default proxy selection. The optional source
-fix applies the explicit choice consistently to installer checks and adapter
-operations, including recovery; see [setup](setup.md#target-powershell-remoting).
+helper provides the explicit choice for installer checks and adapter operations,
+including recovery. Acceptance recovery used the private supervisor's global
+NoProxyServer session option on execution 8ac4d9e, which does not contain the helper.
+The helper was live-checked only by a read-only installer-state query at source
+2a065cf; adapter apply and revert through it have offline coverage only. See
+[setup](setup.md#target-powershell-remoting).
 
 The first Actions attempt failed during checkout, before configuration or target
 mutation. A launched process must use the dedicated account's HOME, USERPROFILE,
@@ -123,7 +142,11 @@ directory, account password file and every journaled account-specific ACL entry.
 The source fix passed 150 tests in PowerShell 5.1 and 7, lint in both shells, synthetic
 PASS/FAIL/INCONCLUSIVE bundle verification and static workflow/pin checks. Its hosted
 [source CI](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/actions/runs/35922822624)
-also passed. These checks do not turn the blocked approval flow into accepted behavior.
+also passed. Final [source CI at 37df135](https://github.com/LoginVSI/LoginEnterprise-PatchValidationGate/actions/runs/35928123767)
+and [candidate CI at 2ac0b86](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35928425557)
+each recorded 150 passed, zero failed and zero skipped in both shells. These are
+offline checks; they do not establish live recovery through the helper or manual
+approval acceptance.
 
 ## Product requirements grounded in this pass
 

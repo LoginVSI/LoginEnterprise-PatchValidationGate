@@ -38,12 +38,7 @@ Set policy `execution.maxWaitMinutes` and `execution.pollIntervalSeconds` before
 
 ## Acceptance limits
 
-During public Actions setup on 2026-09-23, the previous private evidence directory
-was absent on the current machine. The local results above remain the recorded
-2026-09-22 observations; they have not been reverified against their private
-originals in this pass. The public execution export is hardened separately, and
-Actions end-to-end acceptance remains pending recovery inputs and runner access.
 
-PASS and deliberate FAIL are live observations. INCONCLUSIVE, malformed identity handling, late responses and interruption edges have offline regression coverage; no live infrastructure fault was induced. The sanitized genuine fixtures preserve observed success/failure shapes and relationships, while screenshots and original identifiers stay private.
+PASS and deliberate FAIL are live observations. One live INCONCLUSIVE (results-incomplete) was observed when an assigned launcher was offline; it was not deliberately induced. Malformed identity, late responses and interruption edges have offline regression coverage only. The sanitized genuine fixtures preserve observed success/failure shapes and relationships, while screenshots and original identifiers stay private.
 
-GitHub Actions execution, environment protection, issue reporting/closure, authoritative approval acquisition and simulated promotion remain pending. Production promotion is not implemented. Snapshot existence is operator-confirmed and no snapshot restore was performed. Live PowerShell 5.1 mutation was not repeated; both supported shells run the offline tests and lint. The [approval evidence limitation](approval-evidence.md) stays fail-closed. Prepare the later Actions copy using [pinned development exports](private-execution-repository.md).
+Live Actions validation, environment-gate engagement and failure-issue reporting were observed on 2026-09-23. Authoritative manual approval acquisition remains blocked. Simulated promotion, the Actions Continuous Test handoff and success-issue closure were not exercised in that validate-only runner configuration. Production promotion is not implemented. Snapshot existence is operator-confirmed and no snapshot restore was performed. Actions validation used Windows PowerShell 5.1, while the independent recovery supervisor used PowerShell 7; both supported shells run the offline tests and lint. The [approval evidence limitation](approval-evidence.md) stays fail-closed. Prepare the later Actions copy using [pinned development exports](private-execution-repository.md).

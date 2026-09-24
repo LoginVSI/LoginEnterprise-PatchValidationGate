@@ -65,8 +65,12 @@ Target remoting is separate from appliance TLS. LE_SKIP_CERT_CHECK controls only
 
 If TCP/TLS and `/wsman` respond but authenticated remoting stalls, compare a bounded
 session with an explicit proxy choice. Set `LE_TARGET_PROXY_ACCESS_TYPE=NoProxyServer`
-only when direct target access is intended. This fixed the observed acceptance
-client stall without changing the listener, firewall or certificate validation.
+only when direct target access is intended. An explicit NoProxyServer session option
+resolved the observed control-account stall. During acceptance that option was
+applied by the private supervisor to the executed revision; this helper has been
+live-checked only through a read-only installer-state query. Adapter apply and
+revert through the helper are covered offline. Listener, firewall and certificate
+validation settings were unchanged.
 The optional setting also accepts `IEConfig`, `WinHttpConfig` and `AutoDetect`;
 unset preserves the platform default. An explicit choice bounds connection opening
 to 30 seconds, disables connection retries and redirects, and retains all TLS checks.
