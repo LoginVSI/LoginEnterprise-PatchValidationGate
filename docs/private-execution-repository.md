@@ -36,8 +36,18 @@ acceptance items; a generated export is preparation, not a deployment.
 Public visibility is supported for the generated source and reviewed evidence.
 Pass `-PublicRepository` to the exporter for a public execution repository.
 The export records this choice in `execution-source.json` and removes the
-`pull_request` CI trigger. Push CI on `main` remains on GitHub-hosted Windows
-runners. Development PR validation stays in the LoginVSI source repository.
+`pull_request` CI trigger. Push CI on `main` and `chore/sync-*` branches runs on
+GitHub-hosted Windows runners. Publish generated updates on a trusted writer's
+`chore/sync-*` branch so `offline-powershell` and `offline-pwsh` report on the PR
+before protected merge. Development PR validation stays in the LoginVSI source
+repository.
+
+A successful manual CI dispatch does not supply the PR's required checks.
+GitHub [evaluates only eligible event types for PR checks](https://docs.github.com/en/pull-requests/how-tos/merge-and-close-pull-requests/troubleshooting-required-status-checks#checks-from-some-workflow-jobs-are-not-evaluated),
+including `push` but excluding `workflow_dispatch`. Confirm both required checks
+on the current PR head and the required independent review before merging.
+The sync-branch trigger runs offline CI only; live dispatch remains restricted
+to the exact execution repository and `main`.
 
 This difference is necessary before attaching a lab runner. A pull request can
 change a workflow's runner selection; the current `windows-latest` value alone

@@ -39,7 +39,7 @@
         & $exportScript -Repository 'example-owner/public-execution' -SourceCommit $sourceCommit -Destination $destination -PublicRepository
         $ci = Get-Content (Join-Path $destination '.github/workflows/ci.yml') -Raw
         $ci | Should -Not -Match 'pull_request'
-        $ci | Should -Match 'branches: \[main\]'
+        $ci | Should -Match "branches: \[main, 'chore/sync-\*'\]"
         $ci | Should -Match 'runs-on: windows-latest'
         (Get-Content (Join-Path $sourceRoot '.github/workflows/ci.yml') -Raw) | Should -Match 'pull_request:'
         $metadata = Get-Content (Join-Path $destination 'execution-source.json') -Raw | ConvertFrom-Json
