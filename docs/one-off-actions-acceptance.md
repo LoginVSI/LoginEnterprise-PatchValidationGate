@@ -67,8 +67,9 @@ and no environment or branch protection was bypassed.
 
 The environment button alone cannot supply the missing timestamp provenance.
 Job-start time, observation time and an operator-written timestamp are not substitutes.
-The good-update issue was therefore left open, and promotion and its Continuous Test
-handoff remain unaccepted. The operator's general authorization to test is not a
+The historical manual-mode good-update issue was therefore left open; that pass
+did not accept promotion or its Continuous Test handoff. The later automatic-mode
+results are recorded separately below. The operator's general authorization to test is not a
 fabricated per-run approval record.
 
 ## Execution setup findings
@@ -147,6 +148,69 @@ and [candidate CI at 2ac0b86](https://github.com/JoshuaKennedy234/LoginEnterpris
 each recorded 150 passed, zero failed and zero skipped in both shells. These are
 offline checks; they do not establish live recovery through the helper or manual
 approval acceptance.
+
+## Automatic-mode acceptance, 2026-09-24 UTC
+
+The authorized bounded batch used the existing `promotion_mode=auto` path in
+[run 35938835197](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35938835197).
+It ran execution `8ac4d9eabe60185886dd0ef79b318f3bf2b6f767`, exported from source
+`c4e80c84f1bb1185a3117086ba49d387dcf715b8`. The newer source proxy helper was not
+executed. Its live verification remains the earlier read-only query; apply and
+revert through that helper remain covered offline.
+
+| Stage | Observed result | Evidence |
+| --- | --- | --- |
+| Application validation | PASS; both required applications executed once with zero failures | [Validation artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35938835197/artifacts/10783618332) |
+| Automatic simulated promotion | Succeeded; `promotionMode=auto`, `approvedBy=policy`, `simulated=true` | [Promotion artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35938835197/artifacts/10784171868) |
+| Actions Continuous Test handoff | Succeeded; enabled scheduling confirmed, without claiming a completed workload | [Continuous artifact](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/actions/runs/35938835197/artifacts/10783643381) |
+| Scenario issue lifecycle | Created, received validation/promotion/continuous results and closed by the workflow | [Issue #5](https://github.com/JoshuaKennedy234/LoginEnterprise-PatchValidationGate-Lab/issues/5) |
+| Restoration | 23.01 version/hash independently verified; fresh baseline application workloads PASSed | Private identity-preserving recovery and baseline-readiness records |
+| Bounded Continuous Test workload continuation | Both applications passed in fresh sessions on restored 23.01; controller-started after the Actions handoff | Separate private continuation observations, stop/drain and final preflight |
+| Final cleanup | Continuous Testing disabled, designated appliance and native target sessions drained, recovery-required false; temporary runner resources removed | Private final preflight and cleanup journals |
+
+All three downloaded artifact ZIPs matched GitHub's digests and their retained
+runner output bytes. Validation bundle integrity and the private-manifest backlink
+passed. Promotion and continuous records matched the validation hash; the continuous
+job also consumed the independently transferred promotion hash. Artifact and workflow
+log scans found none of the checked private configuration or credential values.
+
+The dependency graph required `validate`, `promote-auto`, then `continuous-testing`.
+The manual job was skipped. Three separate ephemeral registrations each authorized
+only the required job in that run, attempt 1, trusted main SHA, workflow, actor and
+exact automatic-mode input set. The pre-job guard passed 36 positive/negative checks
+across both shells. Current public-repository controls required approval for all
+external contributors. Actual non-admin exposure probes passed. This was a scoped
+account on a shared laptop, not VM isolation.
+
+The private supervisor initially assumed Continuous Testing would create a new run
+ID. The appliance instead reused its persistent run identity. The supervisor stopped
+scheduling during the new session's login, which was aborted before successful
+application execution. Its recovery wait also encountered an uninitialized local
+flag. Both errors and the original journal remain retained. No new update or break
+was dispatched: identity-preserving recovery resumed with the original auto-mode
+inputs, restored 23.01 and required fresh passing baseline workloads.
+
+A separate bounded controller continuation then correlated fresh session timestamps
+and execution relationships under that persistent Continuous Test run ID. Both
+required applications completed successfully. Scheduling was disabled again and
+appliance plus native target sessions were confirmed drained. This verifies a
+controller-started workload continuation on the restored baseline, not a successful
+Actions-started workload iteration on the updated target. The Actions handoff itself
+verifies scheduling enablement, as its contract specifies.
+
+GitHub runner registrations, all eight temporary secrets and five variables were
+removed; live dispatch was disabled. Local account, profile, runner directory,
+temporary credential file and journaled account-specific grants were removed.
+Original evidence, recovery journals and controller credentials remain private.
+The earlier deliberate-break evidence was reverified and reused without repeating
+that scenario.
+
+Manual approval remains separately blocked by authoritative approval-time provenance.
+No manual approval was given, no upper-bound timestamp was substituted, and the
+manual approval contract was unchanged. Historical manual-run issue #3 remains open;
+deliberate-failure issue #4 remains open as expected. Only the fresh automatic-mode
+scenario issue #5 closed through successful handoff. The generated execution
+candidate requires normal protected review; tested execution main remains 8ac4d9e.
 
 ## Product requirements grounded in this pass
 

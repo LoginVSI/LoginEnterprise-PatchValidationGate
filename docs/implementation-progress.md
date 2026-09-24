@@ -1,5 +1,25 @@
 # Implementation progress
 
+## Audit closeout and automatic-mode acceptance, 2026-09-24 UTC
+
+The five independent-audit documentation corrections now distinguish executed source
+c4e80c8 / execution 8ac4d9e, the private supervisor proxy option, the source helper's
+read-only live query and offline helper coverage. Historical PASS/FAIL ZIPs, manifests,
+private backlinks and recovery journals were reverified without another break run.
+
+Automatic run 35938835197 passed validation, simulated policy promotion and Actions
+Continuous Test scheduling handoff, then closed scenario issue #5. Stage artifact
+digests and cross-stage identity checks passed. Separate supervision restored 23.01
+and fresh baseline workloads passed. An initial private observation/recovery error
+was preserved and resolved through identity-preserving recovery; a bounded
+controller-started Continuous Test workload continuation then passed on restored
+23.01. It is separate from the Actions handoff and its aborted initial login.
+
+Final checks confirmed scheduling disabled, designated sessions drained and
+recovery-required false. Temporary runner resources and runtime configuration were
+removed. Manual approval-time provenance remains blocked under the unchanged
+contract. See the [full acceptance record](one-off-actions-acceptance.md).
+
 ## Original-laptop continuation, 2026-09-23
 
 Recovered private originals, restored the public execution checkout and verified

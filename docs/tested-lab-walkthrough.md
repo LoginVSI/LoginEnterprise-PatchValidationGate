@@ -3,9 +3,12 @@
 The historical results below remain valid within their recorded scope. The
 [2026-09-23 Actions continuation](one-off-actions-acceptance.md) recovered their
 private originals and completed live Actions PASS/FAIL validation, artifact checks,
-and independent restoration with fresh baseline workloads. Approval provenance,
-simulated promotion and the Actions Continuous Test handoff remain blocked. Do not
-present the historical local screens as evidence of those blocked workflow stages.
+and independent restoration with fresh baseline workloads. The separately labeled
+2026-09-24 UTC automatic-mode acceptance verified simulated promotion, Actions
+Continuous Test scheduling handoff and scenario issue closure. Its initial login
+was interrupted by the private supervisor; a controller-started workload continuation
+passed after restoration. Manual approval provenance remains blocked. Keep these
+records distinct from the historical local screens below.
 
 Local acceptance on 2026-09-22 used LE 6.8.6, the v8-preview API, PowerShell 7, and a disposable Windows target over HTTPS/5986 with explicit Negotiate credentials and normal certificate validation. Private configuration and DPAPI credentials stayed outside the checkout and OneDrive. The public module does not depend on that credential store.
 
@@ -41,4 +44,4 @@ Set policy `execution.maxWaitMinutes` and `execution.pollIntervalSeconds` before
 
 PASS and deliberate FAIL are live observations. One live INCONCLUSIVE (results-incomplete) was observed when an assigned launcher was offline; it was not deliberately induced. Malformed identity, late responses and interruption edges have offline regression coverage only. The sanitized genuine fixtures preserve observed success/failure shapes and relationships, while screenshots and original identifiers stay private.
 
-Live Actions validation, environment-gate engagement and failure-issue reporting were observed on 2026-09-23. Authoritative manual approval acquisition remains blocked. Simulated promotion, the Actions Continuous Test handoff and success-issue closure were not exercised in that validate-only runner configuration. Production promotion is not implemented. Snapshot existence is operator-confirmed and no snapshot restore was performed. Actions validation used Windows PowerShell 5.1, while the independent recovery supervisor used PowerShell 7; both supported shells run the offline tests and lint. The [approval evidence limitation](approval-evidence.md) stays fail-closed. Prepare the later Actions copy using [pinned development exports](private-execution-repository.md).
+Live Actions validation, environment-gate engagement and failure-issue reporting were observed on 2026-09-23. Authoritative manual approval acquisition remains blocked. The later [automatic-mode acceptance](one-off-actions-acceptance.md#automatic-mode-acceptance-2026-09-24-utc) verified simulated promotion, Actions Continuous Test scheduling handoff and scenario issue closure. It did not establish manual-approval acceptance. Production promotion is not implemented. Snapshot existence is operator-confirmed and no snapshot restore was performed. Actions validation used Windows PowerShell 5.1, while the independent recovery supervisor used PowerShell 7; both supported shells run the offline tests and lint. The [approval evidence limitation](approval-evidence.md) stays fail-closed. Prepare the later Actions copy using [pinned development exports](private-execution-repository.md).
